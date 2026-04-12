@@ -5,12 +5,14 @@ import { TopNav } from "@/components/cookie/top-nav"
 import { BottomNav } from "@/components/cookie/bottom-nav"
 import { MasonryFeed } from "@/components/cookie/masonry-feed"
 import { CameraCapture } from "@/components/cookie/camera-capture"
+import { RecipeSwiper } from "@/components/cookie/recipe-swiper"
 
 type Tab = "Explore" | "Recipes" | "Reviews"
 
 export default function CookieApp() {
   const [activeTab, setActiveTab] = useState<Tab>("Explore")
   const [isCameraOpen, setIsCameraOpen] = useState(false)
+  const [isDiscoverOpen, setIsDiscoverOpen] = useState(false)
 
   return (
     <div className="min-h-screen bg-background w-full max-w-md mx-auto relative">
@@ -20,11 +22,19 @@ export default function CookieApp() {
         <MasonryFeed />
       </main>
       
-      <BottomNav onCreateClick={() => setIsCameraOpen(true)} />
+      <BottomNav 
+        onCreateClick={() => setIsCameraOpen(true)} 
+        onDiscoverClick={() => setIsDiscoverOpen(true)}
+      />
       
       <CameraCapture 
         isOpen={isCameraOpen} 
         onClose={() => setIsCameraOpen(false)} 
+      />
+      
+      <RecipeSwiper 
+        isOpen={isDiscoverOpen} 
+        onClose={() => setIsDiscoverOpen(false)} 
       />
     </div>
   )
