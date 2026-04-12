@@ -379,7 +379,7 @@ export function ReviewsFeed({ isVisible }: ReviewsFeedProps) {
   if (!isVisible) return null
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background">
       {/* Compose area */}
       <div className="px-4 py-3 border-b border-border/50 bg-background sticky top-[108px] z-40">
         {isComposing ? (
@@ -451,7 +451,7 @@ export function ReviewsFeed({ isVisible }: ReviewsFeedProps) {
       </div>
 
       {/* Reviews list */}
-      <div>
+      <div className="bg-background">
         {reviews.map((review) => (
           <ReviewCard 
             key={review.id} 
