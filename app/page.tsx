@@ -11,7 +11,7 @@ export default function CookieApp() {
   const [activeTab, setActiveTab] = useState<Tab>("Explore")
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background w-full max-w-md mx-auto relative">
       <TopNav activeTab={activeTab} onTabChange={setActiveTab} />
       
       <main className="pb-24">

@@ -101,17 +101,17 @@ export function MasonryFeed() {
   const rightColumn = samplePosts.filter((_, i) => i % 2 === 1)
 
   return (
-    <div className="px-3 py-4">
-      <div className="flex gap-3">
+    <div className="px-2 sm:px-3 py-3 sm:py-4">
+      <div className="flex gap-2 sm:gap-3">
         {/* Left Column */}
-        <div className="flex-1 flex flex-col gap-3">
+        <div className="flex-1 flex flex-col gap-2 sm:gap-3 min-w-0">
           {leftColumn.map((post) => (
             <FeedCard key={post.id} post={post} />
           ))}
         </div>
         
         {/* Right Column - offset for staggered effect */}
-        <div className="flex-1 flex flex-col gap-3 pt-8">
+        <div className="flex-1 flex flex-col gap-2 sm:gap-3 pt-6 sm:pt-8 min-w-0">
           {rightColumn.map((post) => (
             <FeedCard key={post.id} post={post} />
           ))}
