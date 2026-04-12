@@ -3,6 +3,10 @@
 import { Home, Compass, Plus, MessageCircle, User } from "lucide-react"
 import { cn } from "@/lib/utils"
 
+interface BottomNavProps {
+  onCreateClick?: () => void
+}
+
 const navItems = [
   { icon: Home, label: "Home", active: true },
   { icon: Compass, label: "Discover", active: false },
@@ -11,7 +15,7 @@ const navItems = [
   { icon: User, label: "Profile", active: false },
 ] as const
 
-export function BottomNav() {
+export function BottomNav({ onCreateClick }: BottomNavProps) {
   return (
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 z-50 bg-background/95 backdrop-blur-md border-t border-border/50 pb-safe w-full max-w-md">
       <div className="flex items-center justify-around px-2 py-2">
@@ -20,6 +24,7 @@ export function BottomNav() {
             return (
               <button
                 key={item.label}
+                onClick={onCreateClick}
                 className="relative -mt-6 flex items-center justify-center"
               >
                 <div className="w-14 h-14 rounded-full bg-primary shadow-lg shadow-primary/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform">
