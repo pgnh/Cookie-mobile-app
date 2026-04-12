@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react"
 import Image from "next/image"
-import { X, Heart, Star, Clock, ChefHat, Bookmark, RotateCcw, Share2, Info } from "lucide-react"
+import { X, Heart, Star, Clock, Bookmark, RotateCcw, Share2, Info } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface RecipeSwiperProps {
@@ -104,16 +104,18 @@ export function RecipeSwiper({ isOpen, onClose }: RecipeSwiperProps) {
 
   if (!isOpen) return null
 
-  const currentRecipe = recipes[currentIndex]
-  const hasMoreRecipes = currentIndex < recipes.length
+  const currentRecipe = recipes[currentIndex % recipes.length]
+  const nextRecipe = recipes[(currentIndex + 1) % recipes.length]
+  const nextNextRecipe = recipes[(currentIndex + 2) % recipes.length]
 
   const handleSwipe = (direction: "left" | "right") => {
-    if (!hasMoreRecipes) return
-    
     setSwipeDirection(direction)
     
     if (direction === "right") {
-      setLikedRecipes(prev => [...prev, currentRecipe.id])
+      // Only add if not already liked
+      if (!likedRecipes.includes(currentRecipe.id)) {
+        setLikedRecipes(prev => [...prev, currentRecipe.id])
+      }
     }
     
     setTimeout(() => {
@@ -146,8 +148,9 @@ export function RecipeSwiper({ isOpen, onClose }: RecipeSwiperProps) {
 
   const handleUndo = () => {
     if (currentIndex > 0) {
+      const prevRecipe = recipes[(currentIndex - 1) % recipes.length]
       setCurrentIndex(prev => prev - 1)
-      setLikedRecipes(prev => prev.filter(id => id !== recipes[currentIndex - 1].id))
+      setLikedRecipes(prev => prev.filter(id => id !== prevRecipe.id))
     }
   }
 
@@ -174,7 +177,7 @@ export function RecipeSwiper({ isOpen, onClose }: RecipeSwiperProps) {
         <div className="flex items-center gap-2">
           <div className="px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm">
             <span className="text-white text-sm font-medium">
-              {currentIndex + 1} / {recipes.length}
+              {(currentIndex % recipes.length) + 1} / {recipes.length}
             </span>
           </div>
           <div className="px-3 py-1.5 rounded-full bg-primary/90 backdrop-blur-sm flex items-center gap-1">
@@ -198,15 +201,24 @@ export function RecipeSwiper({ isOpen, onClose }: RecipeSwiperProps) {
 
       {/* Card Stack */}
       <div className="absolute inset-0 flex items-center justify-center px-4 pt-20 pb-32">
-        {hasMoreRecipes ? (
-          <>
-            {/* Background cards */}
-            {currentIndex + 2 < recipes.length && (
-              <div className="absolute w-[85%] h-[70%] rounded-3xl bg-white/5 scale-90 -translate-y-4" />
-            )}
-            {currentIndex + 1 < recipes.length && (
-              <div className="absolute w-[90%] h-[72%] rounded-3xl bg-white/10 scale-95 -translate-y-2" />
-            )}
+        <>
+          {/* Background cards - always show for infinite loop effect */}
+          <div className="absolute w-[85%] h-[70%] rounded-3xl bg-white/5 scale-90 -translate-y-4 overflow-hidden">
+            <Image
+              src={nextNextRecipe.image}
+              alt=""
+              fill
+              className="object-cover opacity-30"
+            />
+          </div>
+          <div className="absolute w-[90%] h-[72%] rounded-3xl bg-white/10 scale-95 -translate-y-2 overflow-hidden">
+            <Image
+              src={nextRecipe.image}
+              alt=""
+              fill
+              className="object-cover opacity-50"
+            />
+          </div>
             
             {/* Current card */}
             <div
@@ -324,27 +336,11 @@ export function RecipeSwiper({ isOpen, onClose }: RecipeSwiperProps) {
                 )}
               </div>
             </div>
-          </>
-        ) : (
-          /* No more recipes */
-          <div className="text-center px-8">
-            <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
-              <ChefHat className="w-10 h-10 text-primary" />
-            </div>
-            <h2 className="text-2xl font-bold text-white mb-2">All caught up!</h2>
-            <p className="text-white/60 mb-6">
-              You&apos;ve seen all recipes. Check back later for more delicious inspiration!
-            </p>
-            <p className="text-primary font-medium">
-              {likedRecipes.length} recipes saved
-            </p>
-          </div>
-        )}
+        </>
       </div>
 
       {/* Action buttons */}
-      {hasMoreRecipes && (
-        <div className="absolute bottom-8 left-0 right-0 flex items-center justify-center gap-4">
+      <div className="absolute bottom-8 left-0 right-0 flex items-center justify-center gap-4">
           <button 
             onClick={handleUndo}
             disabled={currentIndex === 0}
@@ -384,7 +380,6 @@ export function RecipeSwiper({ isOpen, onClose }: RecipeSwiperProps) {
             <Share2 className="w-5 h-5 text-white" />
           </button>
         </div>
-      )}
 
       <style jsx global>{`
         @keyframes swipe-left {
