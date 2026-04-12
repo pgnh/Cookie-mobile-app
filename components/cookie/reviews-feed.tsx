@@ -381,7 +381,7 @@ export function ReviewsFeed({ isVisible }: ReviewsFeedProps) {
   return (
     <div className="min-h-screen bg-background">
       {/* Compose area */}
-      <div className="px-4 py-3 border-b border-border/50 bg-background">
+      <div className="px-4 py-3 border-b border-border/50 bg-background sticky top-16 z-40">
         {isComposing ? (
           <div className="space-y-3">
             <div className="flex gap-3">
