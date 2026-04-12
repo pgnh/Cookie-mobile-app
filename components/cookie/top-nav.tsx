@@ -18,17 +18,10 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border/50">
       <div className="px-4 pt-3 pb-2">
-        {/* Logo and Search Row */}
+        {/* Search Row */}
         <div className="flex items-center gap-3 mb-3">
-          <div className="flex items-center gap-1.5">
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">C</span>
-            </div>
-            <span className="font-bold text-lg text-foreground">Cookie</span>
-          </div>
-          
           <div className={cn(
-            "flex-1 flex items-center gap-2 px-4 py-2.5 rounded-full transition-all duration-200",
+            "flex-1 max-w-md flex items-center gap-2 px-4 py-2.5 rounded-full transition-all duration-200",
             searchFocused 
               ? "bg-white ring-2 ring-primary shadow-sm" 
               : "bg-muted"
