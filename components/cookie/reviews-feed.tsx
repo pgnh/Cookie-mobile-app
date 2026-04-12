@@ -385,7 +385,7 @@ export function ReviewsFeed({ isVisible }: ReviewsFeedProps) {
         {isComposing ? (
           <div className="space-y-3">
             <div className="flex gap-3">
-              <div className="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+              <div className="relative w-9 h-9 rounded-full overflow-hidden flex-shrink-0">
                 <Image
                   src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop"
                   alt="Your avatar"
@@ -393,40 +393,42 @@ export function ReviewsFeed({ isVisible }: ReviewsFeedProps) {
                   className="object-cover"
                 />
               </div>
-              <textarea
-                value={newReview}
-                onChange={(e) => setNewReview(e.target.value)}
-                placeholder="Share your food experience..."
-                className="flex-1 bg-transparent text-sm resize-none outline-none placeholder:text-muted-foreground min-h-[80px]"
-                autoFocus
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <button className="p-2 hover:bg-muted rounded-full transition-colors">
-                <ImageIcon className="w-5 h-5 text-primary" />
-              </button>
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => {
-                    setIsComposing(false)
-                    setNewReview("")
-                  }}
-                  className="px-4 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Cancel
-                </button>
-                <button 
-                  onClick={handlePost}
-                  disabled={!newReview.trim()}
-                  className={cn(
-                    "px-4 py-1.5 rounded-full text-sm font-semibold transition-all",
-                    newReview.trim()
-                      ? "bg-primary text-primary-foreground hover:opacity-90"
-                      : "bg-muted text-muted-foreground cursor-not-allowed"
-                  )}
-                >
-                  Post
-                </button>
+              <div className="flex-1">
+                <textarea
+                  value={newReview}
+                  onChange={(e) => setNewReview(e.target.value)}
+                  placeholder="Share your food experience..."
+                  className="w-full bg-transparent text-sm resize-none outline-none placeholder:text-muted-foreground min-h-[60px]"
+                  autoFocus
+                />
+                <div className="flex items-center justify-between pt-2 border-t border-border/30">
+                  <button className="p-1.5 hover:bg-muted rounded-full transition-colors">
+                    <ImageIcon className="w-4 h-4 text-primary" />
+                  </button>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={() => {
+                        setIsComposing(false)
+                        setNewReview("")
+                      }}
+                      className="px-3 py-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      onClick={handlePost}
+                      disabled={!newReview.trim()}
+                      className={cn(
+                        "px-3 py-1 rounded-full text-xs font-semibold transition-all",
+                        newReview.trim()
+                          ? "bg-primary text-primary-foreground hover:opacity-90"
+                          : "bg-muted text-muted-foreground cursor-not-allowed"
+                      )}
+                    >
+                      Post
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -435,7 +437,7 @@ export function ReviewsFeed({ isVisible }: ReviewsFeedProps) {
             onClick={() => setIsComposing(true)}
             className="w-full flex items-center gap-3 text-left"
           >
-            <div className="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+            <div className="relative w-9 h-9 rounded-full overflow-hidden flex-shrink-0">
               <Image
                 src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop"
                 alt="Your avatar"
@@ -443,9 +445,14 @@ export function ReviewsFeed({ isVisible }: ReviewsFeedProps) {
                 className="object-cover"
               />
             </div>
-            <span className="text-sm text-muted-foreground">
-              Share your food experience...
-            </span>
+            <div className="flex-1 flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">
+                Share your food experience...
+              </span>
+              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-primary text-primary-foreground">
+                Post
+              </span>
+            </div>
           </button>
         )}
       </div>
