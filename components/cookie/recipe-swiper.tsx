@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react"
 import Image from "next/image"
-import { X, Heart, Star, Clock, Bookmark, RotateCcw, Share2, Info } from "lucide-react"
+import { X, Heart, Star, Clock, Bookmark, Share2, MessageCircle, ChevronUp, ChevronDown, Play } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface RecipeSwiperProps {
@@ -22,6 +22,8 @@ interface Recipe {
   reviews: number
   ingredients: string[]
   tags: string[]
+  likes: number
+  comments: number
 }
 
 const recipes: Recipe[] = [
@@ -36,7 +38,9 @@ const recipes: Recipe[] = [
     rating: 4.9,
     reviews: 2341,
     ingredients: ["Eggs", "Flour", "Milk", "Sugar", "Vanilla"],
-    tags: ["Breakfast", "Japanese", "Sweet"]
+    tags: ["Breakfast", "Japanese"],
+    likes: 12400,
+    comments: 856
   },
   {
     id: 2,
@@ -49,7 +53,9 @@ const recipes: Recipe[] = [
     rating: 4.8,
     reviews: 1876,
     ingredients: ["Salmon", "Garlic", "Spinach", "Cream", "Parmesan"],
-    tags: ["Dinner", "Healthy", "Italian"]
+    tags: ["Dinner", "Italian"],
+    likes: 8900,
+    comments: 432
   },
   {
     id: 3,
@@ -62,7 +68,9 @@ const recipes: Recipe[] = [
     rating: 4.9,
     reviews: 3102,
     ingredients: ["Chicken Wings", "Gochujang", "Soy Sauce", "Honey", "Garlic"],
-    tags: ["Korean", "Spicy", "Crispy"]
+    tags: ["Korean", "Spicy"],
+    likes: 23100,
+    comments: 1204
   },
   {
     id: 4,
@@ -75,7 +83,9 @@ const recipes: Recipe[] = [
     rating: 4.7,
     reviews: 956,
     ingredients: ["Matcha", "Mascarpone", "Ladyfingers", "Cream", "Sugar"],
-    tags: ["Dessert", "Japanese", "No-Bake"]
+    tags: ["Dessert", "No-Bake"],
+    likes: 15600,
+    comments: 723
   },
   {
     id: 5,
@@ -88,36 +98,30 @@ const recipes: Recipe[] = [
     rating: 4.8,
     reviews: 2156,
     ingredients: ["Rice Noodles", "Thai Basil", "Chili", "Garlic", "Soy Sauce"],
-    tags: ["Thai", "Spicy", "Quick"]
+    tags: ["Thai", "Quick"],
+    likes: 19800,
+    comments: 945
   }
 ]
 
 export function RecipeSwiper({ isOpen, onClose }: RecipeSwiperProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(null)
+  const [swipeDirection, setSwipeDirection] = useState<"up" | "down" | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [dragOffset, setDragOffset] = useState(0)
   const [likedRecipes, setLikedRecipes] = useState<number[]>([])
-  const [showInfo, setShowInfo] = useState(false)
-  const startX = useRef(0)
-  const cardRef = useRef<HTMLDivElement>(null)
+  const [savedRecipes, setSavedRecipes] = useState<number[]>([])
+  const startY = useRef(0)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   if (!isOpen) return null
 
   const currentRecipe = recipes[currentIndex % recipes.length]
-  const nextRecipe = recipes[(currentIndex + 1) % recipes.length]
-  const nextNextRecipe = recipes[(currentIndex + 2) % recipes.length]
+  const isLiked = likedRecipes.includes(currentRecipe.id)
+  const isSaved = savedRecipes.includes(currentRecipe.id)
 
-  const handleSwipe = (direction: "left" | "right") => {
-    setSwipeDirection(direction)
-    
-    if (direction === "right") {
-      // Only add if not already liked
-      if (!likedRecipes.includes(currentRecipe.id)) {
-        setLikedRecipes(prev => [...prev, currentRecipe.id])
-      }
-    }
-    
+  const goToNext = () => {
+    setSwipeDirection("up")
     setTimeout(() => {
       setCurrentIndex(prev => prev + 1)
       setSwipeDirection(null)
@@ -125,280 +129,300 @@ export function RecipeSwiper({ isOpen, onClose }: RecipeSwiperProps) {
     }, 300)
   }
 
+  const goToPrev = () => {
+    if (currentIndex > 0) {
+      setSwipeDirection("down")
+      setTimeout(() => {
+        setCurrentIndex(prev => prev - 1)
+        setSwipeDirection(null)
+        setDragOffset(0)
+      }, 300)
+    }
+  }
+
   const handleTouchStart = (e: React.TouchEvent | React.MouseEvent) => {
     setIsDragging(true)
-    startX.current = 'touches' in e ? e.touches[0].clientX : e.clientX
+    startY.current = 'touches' in e ? e.touches[0].clientY : e.clientY
   }
 
   const handleTouchMove = (e: React.TouchEvent | React.MouseEvent) => {
     if (!isDragging) return
-    const currentX = 'touches' in e ? e.touches[0].clientX : e.clientX
-    const diff = currentX - startX.current
+    const currentY = 'touches' in e ? e.touches[0].clientY : e.clientY
+    const diff = currentY - startY.current
     setDragOffset(diff)
   }
 
   const handleTouchEnd = () => {
     setIsDragging(false)
-    if (Math.abs(dragOffset) > 100) {
-      handleSwipe(dragOffset > 0 ? "right" : "left")
+    if (dragOffset < -80) {
+      goToNext()
+    } else if (dragOffset > 80 && currentIndex > 0) {
+      goToPrev()
     } else {
       setDragOffset(0)
     }
   }
 
-  const handleUndo = () => {
-    if (currentIndex > 0) {
-      const prevRecipe = recipes[(currentIndex - 1) % recipes.length]
-      setCurrentIndex(prev => prev - 1)
-      setLikedRecipes(prev => prev.filter(id => id !== prevRecipe.id))
+  const toggleLike = () => {
+    if (isLiked) {
+      setLikedRecipes(prev => prev.filter(id => id !== currentRecipe.id))
+    } else {
+      setLikedRecipes(prev => [...prev, currentRecipe.id])
     }
+  }
+
+  const toggleSave = () => {
+    if (isSaved) {
+      setSavedRecipes(prev => prev.filter(id => id !== currentRecipe.id))
+    } else {
+      setSavedRecipes(prev => [...prev, currentRecipe.id])
+    }
+  }
+
+  const formatCount = (count: number) => {
+    if (count >= 1000) {
+      return `${(count / 1000).toFixed(1)}k`
+    }
+    return count.toString()
   }
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case "Easy": return "bg-green-500/20 text-green-600"
-      case "Medium": return "bg-yellow-500/20 text-yellow-600"
-      case "Hard": return "bg-red-500/20 text-red-600"
-      default: return "bg-muted text-muted-foreground"
+      case "Easy": return "bg-green-500"
+      case "Medium": return "bg-yellow-500"
+      case "Hard": return "bg-red-500"
+      default: return "bg-muted"
     }
   }
 
   return (
-    <div className="fixed inset-0 z-[60] bg-black">
-      {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-4 pt-12 pb-4">
-        <button 
-          onClick={onClose}
-          className="p-2 rounded-full bg-white/10 backdrop-blur-sm"
-        >
-          <X className="w-5 h-5 text-white" />
-        </button>
-        
-        <div className="flex items-center gap-2">
-          <div className="px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm">
-            <span className="text-white text-sm font-medium">
-              {(currentIndex % recipes.length) + 1} / {recipes.length}
-            </span>
-          </div>
-          <div className="px-3 py-1.5 rounded-full bg-primary/90 backdrop-blur-sm flex items-center gap-1">
-            <Heart className="w-4 h-4 text-primary-foreground fill-primary-foreground" />
-            <span className="text-primary-foreground text-sm font-medium">
-              {likedRecipes.length}
-            </span>
-          </div>
-        </div>
-        
-        <button 
-          onClick={() => setShowInfo(!showInfo)}
+    <div className="fixed inset-0 z-[60] bg-black overflow-hidden">
+      {/* Full screen recipe card */}
+      <div 
+        ref={containerRef}
+        className="relative w-full h-full"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onMouseDown={handleTouchStart}
+        onMouseMove={handleTouchMove}
+        onMouseUp={handleTouchEnd}
+        onMouseLeave={handleTouchEnd}
+      >
+        {/* Background Image */}
+        <div 
           className={cn(
-            "p-2 rounded-full backdrop-blur-sm transition-colors",
-            showInfo ? "bg-primary" : "bg-white/10"
+            "absolute inset-0 transition-transform duration-300",
+            swipeDirection === "up" && "animate-slide-up",
+            swipeDirection === "down" && "animate-slide-down"
           )}
+          style={{
+            transform: `translateY(${dragOffset * 0.3}px)`,
+          }}
         >
-          <Info className={cn("w-5 h-5", showInfo ? "text-primary-foreground" : "text-white")} />
-        </button>
-      </div>
+          <Image
+            src={currentRecipe.image}
+            alt={currentRecipe.title}
+            fill
+            className="object-cover"
+            priority
+          />
+          {/* Gradient overlays */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/80" />
+        </div>
 
-      {/* Card Stack */}
-      <div className="absolute inset-0 flex items-center justify-center px-2 pt-16 pb-24">
-        <>
-          {/* Background cards - always show for infinite loop effect */}
-          <div className="absolute w-[94%] h-[88%] rounded-3xl bg-white/5 scale-[0.92] -translate-y-3 overflow-hidden">
-            <Image
-              src={nextNextRecipe.image}
-              alt=""
-              fill
-              className="object-cover opacity-30"
-            />
+        {/* Top Header */}
+        <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-4 pt-12 pb-4">
+          <button 
+            onClick={onClose}
+            className="p-2.5 rounded-full bg-black/30 backdrop-blur-sm"
+          >
+            <X className="w-5 h-5 text-white" />
+          </button>
+          
+          <div className="flex items-center gap-2">
+            <span className="text-white/80 text-sm font-medium">
+              Discover
+            </span>
           </div>
-          <div className="absolute w-[97%] h-[90%] rounded-3xl bg-white/10 scale-[0.96] -translate-y-1.5 overflow-hidden">
-            <Image
-              src={nextRecipe.image}
-              alt=""
-              fill
-              className="object-cover opacity-50"
-            />
-          </div>
-            
-            {/* Current card */}
-            <div
-              ref={cardRef}
-              className={cn(
-                "relative w-full h-[92%] rounded-3xl overflow-hidden bg-card shadow-2xl cursor-grab active:cursor-grabbing transition-transform",
-                swipeDirection === "left" && "animate-swipe-left",
-                swipeDirection === "right" && "animate-swipe-right"
-              )}
-              style={{
-                transform: `translateX(${dragOffset}px) rotate(${dragOffset * 0.05}deg)`,
-              }}
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
-              onMouseDown={handleTouchStart}
-              onMouseMove={handleTouchMove}
-              onMouseUp={handleTouchEnd}
-              onMouseLeave={handleTouchEnd}
-            >
-              {/* Swipe indicators */}
-              <div 
-                className={cn(
-                  "absolute top-8 left-4 z-20 px-4 py-2 rounded-lg border-4 border-green-500 rotate-[-20deg] transition-opacity",
-                  dragOffset > 50 ? "opacity-100" : "opacity-0"
-                )}
-              >
-                <span className="text-green-500 font-bold text-2xl">SAVE</span>
-              </div>
-              <div 
-                className={cn(
-                  "absolute top-8 right-4 z-20 px-4 py-2 rounded-lg border-4 border-red-500 rotate-[20deg] transition-opacity",
-                  dragOffset < -50 ? "opacity-100" : "opacity-0"
-                )}
-              >
-                <span className="text-red-500 font-bold text-2xl">SKIP</span>
-              </div>
 
-              {/* Recipe Image - TikTok style full height */}
-              <div className="relative h-[65%] w-full">
-                <Image
-                  src={currentRecipe.image}
-                  alt={currentRecipe.title}
-                  fill
-                  className="object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                
-                {/* Tags */}
-                <div className="absolute bottom-4 left-4 flex flex-wrap gap-2">
-                  {currentRecipe.tags.map((tag) => (
-                    <span 
-                      key={tag}
-                      className="px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm text-white text-sm font-medium"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
+          <div className="w-10" />
+        </div>
 
-              {/* Recipe Info */}
-              <div className="p-5 h-[35%] flex flex-col">
-                <h2 className="text-2xl font-bold text-foreground leading-tight mb-3">
-                  {currentRecipe.title}
-                </h2>
-                
-                {/* Chef info */}
-                <div className="flex items-center gap-2.5 mb-4">
-                  <div className="w-8 h-8 rounded-full overflow-hidden relative">
-                    <Image
-                      src={currentRecipe.chefAvatar}
-                      alt={currentRecipe.chef}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <span className="text-base text-muted-foreground">by {currentRecipe.chef}</span>
-                </div>
+        {/* Swipe hint indicators */}
+        <div className={cn(
+          "absolute top-1/3 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 transition-opacity pointer-events-none",
+          dragOffset < -30 ? "opacity-100" : "opacity-0"
+        )}>
+          <ChevronUp className="w-8 h-8 text-white animate-bounce" />
+          <span className="text-white text-sm font-medium">Next recipe</span>
+        </div>
 
-                {/* Stats */}
-                <div className="flex items-center gap-5 mb-4">
-                  <div className="flex items-center gap-1.5">
-                    <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
-                    <span className="text-base font-semibold">{currentRecipe.rating}</span>
-                    <span className="text-sm text-muted-foreground">({currentRecipe.reviews})</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Clock className="w-5 h-5 text-muted-foreground" />
-                    <span className="text-base text-muted-foreground">{currentRecipe.time}</span>
-                  </div>
-                  <span className={cn(
-                    "px-3 py-1 rounded-full text-sm font-medium",
-                    getDifficultyColor(currentRecipe.difficulty)
-                  )}>
-                    {currentRecipe.difficulty}
-                  </span>
-                </div>
+        <div className={cn(
+          "absolute top-1/4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 transition-opacity pointer-events-none",
+          dragOffset > 30 && currentIndex > 0 ? "opacity-100" : "opacity-0"
+        )}>
+          <span className="text-white text-sm font-medium">Previous recipe</span>
+          <ChevronDown className="w-8 h-8 text-white animate-bounce" />
+        </div>
 
-                {/* Ingredients preview */}
-                {showInfo && (
-                  <div className="flex-1 overflow-auto">
-                    <p className="text-sm text-muted-foreground mb-2">Ingredients:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {currentRecipe.ingredients.map((ing) => (
-                        <span 
-                          key={ing}
-                          className="px-3 py-1 rounded-full bg-muted text-sm text-foreground"
-                        >
-                          {ing}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+        {/* Right side action buttons - TikTok style */}
+        <div className="absolute right-3 bottom-36 z-20 flex flex-col items-center gap-5">
+          {/* Chef avatar */}
+          <div className="relative mb-2">
+            <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white">
+              <Image
+                src={currentRecipe.chefAvatar}
+                alt={currentRecipe.chef}
+                fill
+                className="object-cover"
+              />
             </div>
-        </>
-      </div>
+            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+              <span className="text-[10px] text-primary-foreground font-bold">+</span>
+            </div>
+          </div>
 
-      {/* Action buttons */}
-      <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-3">
+          {/* Like button */}
           <button 
-            onClick={handleUndo}
-            disabled={currentIndex === 0}
-            className={cn(
-              "w-10 h-10 rounded-full flex items-center justify-center transition-all",
-              currentIndex === 0 
-                ? "bg-white/5 text-white/30" 
-                : "bg-white/10 text-white hover:bg-white/20"
-            )}
+            onClick={toggleLike}
+            className="flex flex-col items-center gap-1"
           >
-            <RotateCcw className="w-4 h-4" />
+            <div className={cn(
+              "w-12 h-12 rounded-full flex items-center justify-center transition-all",
+              isLiked ? "bg-red-500 scale-110" : "bg-black/30 backdrop-blur-sm"
+            )}>
+              <Heart className={cn(
+                "w-6 h-6 transition-all",
+                isLiked ? "text-white fill-white" : "text-white"
+              )} />
+            </div>
+            <span className="text-white text-xs font-medium">
+              {formatCount(currentRecipe.likes + (isLiked ? 1 : 0))}
+            </span>
           </button>
-          
-          <button 
-            onClick={() => handleSwipe("left")}
-            className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center hover:bg-red-500/80 transition-colors group"
-          >
-            <X className="w-7 h-7 text-white group-hover:scale-110 transition-transform" />
+
+          {/* Comment button */}
+          <button className="flex flex-col items-center gap-1">
+            <div className="w-12 h-12 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
+              <MessageCircle className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-white text-xs font-medium">
+              {formatCount(currentRecipe.comments)}
+            </span>
           </button>
-          
+
+          {/* Save button */}
           <button 
-            onClick={() => handleSwipe("right")}
-            className="w-16 h-16 rounded-full bg-primary shadow-lg shadow-primary/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
+            onClick={toggleSave}
+            className="flex flex-col items-center gap-1"
           >
-            <Heart className="w-8 h-8 text-primary-foreground" />
+            <div className={cn(
+              "w-12 h-12 rounded-full flex items-center justify-center transition-all",
+              isSaved ? "bg-primary scale-110" : "bg-black/30 backdrop-blur-sm"
+            )}>
+              <Bookmark className={cn(
+                "w-6 h-6 transition-all",
+                isSaved ? "text-primary-foreground fill-primary-foreground" : "text-white"
+              )} />
+            </div>
+            <span className="text-white text-xs font-medium">Save</span>
           </button>
-          
-          <button 
-            className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center hover:bg-blue-500/80 transition-colors group"
-          >
-            <Bookmark className="w-6 h-6 text-white group-hover:scale-110 transition-transform" />
-          </button>
-          
-          <button 
-            className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
-          >
-            <Share2 className="w-4 h-4 text-white" />
+
+          {/* Share button */}
+          <button className="flex flex-col items-center gap-1">
+            <div className="w-12 h-12 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
+              <Share2 className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-white text-xs font-medium">Share</span>
           </button>
         </div>
+
+        {/* Bottom content overlay */}
+        <div className="absolute bottom-0 left-0 right-16 z-10 p-4 pb-8">
+          {/* Chef info */}
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-white font-semibold">@{currentRecipe.chef.toLowerCase().replace(' ', '_')}</span>
+            <button className="px-3 py-1 rounded-full border border-white/50 text-white text-xs font-medium">
+              Follow
+            </button>
+          </div>
+
+          {/* Title */}
+          <h2 className="text-white text-xl font-bold leading-tight mb-3">
+            {currentRecipe.title}
+          </h2>
+
+          {/* Recipe stats bar */}
+          <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-sm">
+              <Clock className="w-4 h-4 text-white" />
+              <span className="text-white text-sm">{currentRecipe.time}</span>
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-sm">
+              <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+              <span className="text-white text-sm">{currentRecipe.rating}</span>
+            </div>
+            <div className={cn(
+              "w-2 h-2 rounded-full",
+              getDifficultyColor(currentRecipe.difficulty)
+            )} />
+            <span className="text-white/80 text-sm">{currentRecipe.difficulty}</span>
+          </div>
+
+          {/* Tags */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {currentRecipe.tags.map((tag) => (
+              <span 
+                key={tag}
+                className="text-white/90 text-sm"
+              >
+                #{tag.toLowerCase()}
+              </span>
+            ))}
+          </div>
+
+          {/* Try Recipe Button */}
+          <button className="w-full py-3.5 rounded-full bg-primary flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+            <Play className="w-5 h-5 text-primary-foreground fill-primary-foreground" />
+            <span className="text-primary-foreground font-semibold">Try This Recipe</span>
+          </button>
+        </div>
+
+        {/* Progress indicator */}
+        <div className="absolute right-1.5 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-1">
+          {recipes.map((_, index) => (
+            <div 
+              key={index}
+              className={cn(
+                "w-1 rounded-full transition-all",
+                index === currentIndex % recipes.length 
+                  ? "h-6 bg-white" 
+                  : "h-2 bg-white/30"
+              )}
+            />
+          ))}
+        </div>
+      </div>
 
       <style jsx global>{`
-        @keyframes swipe-left {
+        @keyframes slide-up {
           to {
-            transform: translateX(-150%) rotate(-30deg);
+            transform: translateY(-100%);
             opacity: 0;
           }
         }
-        @keyframes swipe-right {
+        @keyframes slide-down {
           to {
-            transform: translateX(150%) rotate(30deg);
+            transform: translateY(100%);
             opacity: 0;
           }
         }
-        .animate-swipe-left {
-          animation: swipe-left 0.3s ease-out forwards;
+        .animate-slide-up {
+          animation: slide-up 0.3s ease-out forwards;
         }
-        .animate-swipe-right {
-          animation: swipe-right 0.3s ease-out forwards;
+        .animate-slide-down {
+          animation: slide-down 0.3s ease-out forwards;
         }
       `}</style>
     </div>
