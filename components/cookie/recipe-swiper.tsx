@@ -200,10 +200,10 @@ export function RecipeSwiper({ isOpen, onClose }: RecipeSwiperProps) {
       </div>
 
       {/* Card Stack */}
-      <div className="absolute inset-0 flex items-center justify-center px-4 pt-20 pb-32">
+      <div className="absolute inset-0 flex items-center justify-center px-2 pt-16 pb-24">
         <>
           {/* Background cards - always show for infinite loop effect */}
-          <div className="absolute w-[85%] h-[70%] rounded-3xl bg-white/5 scale-90 -translate-y-4 overflow-hidden">
+          <div className="absolute w-[94%] h-[88%] rounded-3xl bg-white/5 scale-[0.92] -translate-y-3 overflow-hidden">
             <Image
               src={nextNextRecipe.image}
               alt=""
@@ -211,7 +211,7 @@ export function RecipeSwiper({ isOpen, onClose }: RecipeSwiperProps) {
               className="object-cover opacity-30"
             />
           </div>
-          <div className="absolute w-[90%] h-[72%] rounded-3xl bg-white/10 scale-95 -translate-y-2 overflow-hidden">
+          <div className="absolute w-[97%] h-[90%] rounded-3xl bg-white/10 scale-[0.96] -translate-y-1.5 overflow-hidden">
             <Image
               src={nextRecipe.image}
               alt=""
@@ -224,7 +224,7 @@ export function RecipeSwiper({ isOpen, onClose }: RecipeSwiperProps) {
             <div
               ref={cardRef}
               className={cn(
-                "relative w-full max-w-sm h-[75%] rounded-3xl overflow-hidden bg-card shadow-2xl cursor-grab active:cursor-grabbing transition-transform",
+                "relative w-full h-[92%] rounded-3xl overflow-hidden bg-card shadow-2xl cursor-grab active:cursor-grabbing transition-transform",
                 swipeDirection === "left" && "animate-swipe-left",
                 swipeDirection === "right" && "animate-swipe-right"
               )}
@@ -257,22 +257,22 @@ export function RecipeSwiper({ isOpen, onClose }: RecipeSwiperProps) {
                 <span className="text-red-500 font-bold text-2xl">SKIP</span>
               </div>
 
-              {/* Recipe Image */}
-              <div className="relative h-[55%] w-full">
+              {/* Recipe Image - TikTok style full height */}
+              <div className="relative h-[65%] w-full">
                 <Image
                   src={currentRecipe.image}
                   alt={currentRecipe.title}
                   fill
                   className="object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                 
                 {/* Tags */}
                 <div className="absolute bottom-4 left-4 flex flex-wrap gap-2">
                   {currentRecipe.tags.map((tag) => (
                     <span 
                       key={tag}
-                      className="px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-sm text-white text-xs font-medium"
+                      className="px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm text-white text-sm font-medium"
                     >
                       {tag}
                     </span>
@@ -281,14 +281,14 @@ export function RecipeSwiper({ isOpen, onClose }: RecipeSwiperProps) {
               </div>
 
               {/* Recipe Info */}
-              <div className="p-4 h-[45%] flex flex-col">
-                <h2 className="text-xl font-bold text-foreground leading-tight mb-2">
+              <div className="p-5 h-[35%] flex flex-col">
+                <h2 className="text-2xl font-bold text-foreground leading-tight mb-3">
                   {currentRecipe.title}
                 </h2>
                 
                 {/* Chef info */}
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-6 h-6 rounded-full overflow-hidden relative">
+                <div className="flex items-center gap-2.5 mb-4">
+                  <div className="w-8 h-8 rounded-full overflow-hidden relative">
                     <Image
                       src={currentRecipe.chefAvatar}
                       alt={currentRecipe.chef}
@@ -296,22 +296,22 @@ export function RecipeSwiper({ isOpen, onClose }: RecipeSwiperProps) {
                       className="object-cover"
                     />
                   </div>
-                  <span className="text-sm text-muted-foreground">by {currentRecipe.chef}</span>
+                  <span className="text-base text-muted-foreground">by {currentRecipe.chef}</span>
                 </div>
 
                 {/* Stats */}
-                <div className="flex items-center gap-4 mb-3">
-                  <div className="flex items-center gap-1">
-                    <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                    <span className="text-sm font-semibold">{currentRecipe.rating}</span>
-                    <span className="text-xs text-muted-foreground">({currentRecipe.reviews})</span>
+                <div className="flex items-center gap-5 mb-4">
+                  <div className="flex items-center gap-1.5">
+                    <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+                    <span className="text-base font-semibold">{currentRecipe.rating}</span>
+                    <span className="text-sm text-muted-foreground">({currentRecipe.reviews})</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">{currentRecipe.time}</span>
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="w-5 h-5 text-muted-foreground" />
+                    <span className="text-base text-muted-foreground">{currentRecipe.time}</span>
                   </div>
                   <span className={cn(
-                    "px-2 py-0.5 rounded-full text-xs font-medium",
+                    "px-3 py-1 rounded-full text-sm font-medium",
                     getDifficultyColor(currentRecipe.difficulty)
                   )}>
                     {currentRecipe.difficulty}
@@ -321,12 +321,12 @@ export function RecipeSwiper({ isOpen, onClose }: RecipeSwiperProps) {
                 {/* Ingredients preview */}
                 {showInfo && (
                   <div className="flex-1 overflow-auto">
-                    <p className="text-xs text-muted-foreground mb-1">Ingredients:</p>
-                    <div className="flex flex-wrap gap-1">
+                    <p className="text-sm text-muted-foreground mb-2">Ingredients:</p>
+                    <div className="flex flex-wrap gap-2">
                       {currentRecipe.ingredients.map((ing) => (
                         <span 
                           key={ing}
-                          className="px-2 py-0.5 rounded-full bg-muted text-xs text-foreground"
+                          className="px-3 py-1 rounded-full bg-muted text-sm text-foreground"
                         >
                           {ing}
                         </span>
@@ -340,44 +340,44 @@ export function RecipeSwiper({ isOpen, onClose }: RecipeSwiperProps) {
       </div>
 
       {/* Action buttons */}
-      <div className="absolute bottom-8 left-0 right-0 flex items-center justify-center gap-4">
+      <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-3">
           <button 
             onClick={handleUndo}
             disabled={currentIndex === 0}
             className={cn(
-              "w-12 h-12 rounded-full flex items-center justify-center transition-all",
+              "w-10 h-10 rounded-full flex items-center justify-center transition-all",
               currentIndex === 0 
                 ? "bg-white/5 text-white/30" 
                 : "bg-white/10 text-white hover:bg-white/20"
             )}
           >
-            <RotateCcw className="w-5 h-5" />
+            <RotateCcw className="w-4 h-4" />
           </button>
           
           <button 
             onClick={() => handleSwipe("left")}
-            className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center hover:bg-red-500/80 transition-colors group"
+            className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center hover:bg-red-500/80 transition-colors group"
           >
-            <X className="w-8 h-8 text-white group-hover:scale-110 transition-transform" />
+            <X className="w-7 h-7 text-white group-hover:scale-110 transition-transform" />
           </button>
           
           <button 
             onClick={() => handleSwipe("right")}
-            className="w-20 h-20 rounded-full bg-primary shadow-lg shadow-primary/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
+            className="w-16 h-16 rounded-full bg-primary shadow-lg shadow-primary/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
           >
-            <Heart className="w-10 h-10 text-primary-foreground" />
+            <Heart className="w-8 h-8 text-primary-foreground" />
           </button>
           
           <button 
-            className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center hover:bg-blue-500/80 transition-colors group"
+            className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center hover:bg-blue-500/80 transition-colors group"
           >
-            <Bookmark className="w-7 h-7 text-white group-hover:scale-110 transition-transform" />
+            <Bookmark className="w-6 h-6 text-white group-hover:scale-110 transition-transform" />
           </button>
           
           <button 
-            className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+            className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
           >
-            <Share2 className="w-5 h-5 text-white" />
+            <Share2 className="w-4 h-4 text-white" />
           </button>
         </div>
 
