@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react"
 import Image from "next/image"
+import { UserProfile } from "./user-profile"
 import { X, Heart, Star, Clock, Bookmark, RotateCcw, Share2, Info, ChevronLeft, ChefHat, Users, Flame, CheckCircle2, Play, ArrowUpRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -206,6 +207,7 @@ export function RecipeSwiper({ isOpen, onClose }: RecipeSwiperProps) {
   const [showInfo, setShowInfo] = useState(false)
   const [showDetail, setShowDetail] = useState(false)
   const [savedSteps, setSavedSteps] = useState<number[]>([])
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
   const startX = useRef(0)
   const isDragging = useRef(false)
@@ -399,14 +401,17 @@ export function RecipeSwiper({ isOpen, onClose }: RecipeSwiperProps) {
 
               {/* Chef info */}
               <div className="flex items-center gap-2.5 mb-4">
-                <div className="relative w-8 h-8 rounded-full overflow-hidden">
+                <button
+                  onClick={() => setIsProfileOpen(true)}
+                  className="relative w-8 h-8 rounded-full overflow-hidden ring-2 ring-primary/20 hover:opacity-80 transition-opacity"
+                >
                   <Image
                     src={currentRecipe.chefAvatar}
                     alt={currentRecipe.chef}
                     fill
                     className="object-cover"
                   />
-                </div>
+                </button>
                 <span className="text-base text-muted-foreground">by {currentRecipe.chef}</span>
               </div>
 
@@ -551,13 +556,19 @@ export function RecipeSwiper({ isOpen, onClose }: RecipeSwiperProps) {
           {/* ── Chef Section ── */}
           <div className="px-4 py-4 border-b border-border/50">
             <div className="flex items-center gap-3">
-              <div className="relative w-12 h-12 rounded-full overflow-hidden ring-2 ring-primary/20">
+              <button
+                onClick={() => setIsProfileOpen(true)}
+                className="relative w-12 h-12 rounded-full overflow-hidden ring-2 ring-primary/20 hover:opacity-80 transition-opacity"
+              >
                 <Image src={currentRecipe.chefAvatar} alt={currentRecipe.chef} fill className="object-cover" />
-              </div>
-              <div className="flex-1">
+              </button>
+              <button
+                onClick={() => setIsProfileOpen(true)}
+                className="flex-1 text-left hover:opacity-80 transition-opacity"
+              >
                 <p className="font-bold text-foreground">{currentRecipe.chef}</p>
                 <p className="text-xs text-muted-foreground">Recipe Creator</p>
-              </div>
+              </button>
               <button className="px-4 py-1.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity">
                 Follow
               </button>
@@ -691,6 +702,21 @@ export function RecipeSwiper({ isOpen, onClose }: RecipeSwiperProps) {
           </div>
         </div>
       )}
+
+      <UserProfile
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+        user={{
+          id: currentRecipe.id.toString(),
+          name: currentRecipe.chef,
+          username: currentRecipe.chef.toLowerCase().replace(/\s+/g, ""),
+          avatar: currentRecipe.chefAvatar,
+          followers: 25600,
+          following: 450,
+          posts: 523,
+          isVerified: true
+        }}
+      />
     </div>
   )
 }

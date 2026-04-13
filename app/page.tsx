@@ -9,6 +9,7 @@ import { RecipeSwiper } from "@/components/cookie/recipe-swiper"
 import { ReviewsFeed } from "@/components/cookie/reviews-feed"
 import { Messages } from "@/components/cookie/messages"
 import { Profile } from "@/components/cookie/profile"
+import { Notifications } from "@/components/cookie/notifications"
 
 type Tab = "Explore" | "Reviews"
 
@@ -18,10 +19,15 @@ export default function CookieApp() {
   const [isDiscoverOpen, setIsDiscoverOpen] = useState(false)
   const [isMessagesOpen, setIsMessagesOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
 
   return (
     <div className="min-h-screen bg-background w-full max-w-md mx-auto relative">
-      <TopNav activeTab={activeTab} onTabChange={setActiveTab} />
+      <TopNav
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        onNotificationsClick={() => setIsNotificationsOpen(true)}
+      />
       
       <main className="pb-24">
         {activeTab === "Explore" && <MasonryFeed />}
@@ -56,6 +62,11 @@ export default function CookieApp() {
       <Profile
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
+      />
+
+      <Notifications
+        isOpen={isNotificationsOpen}
+        onClose={() => setIsNotificationsOpen(false)}
       />
     </div>
   )

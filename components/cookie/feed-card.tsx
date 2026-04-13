@@ -1,8 +1,10 @@
 "use client"
 
+import { useState } from "react"
 import Image from "next/image"
 import { Heart, Bookmark } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { UserProfile } from "./user-profile"
 
 export interface FeedPost {
   id: string
@@ -20,6 +22,7 @@ export interface FeedPost {
 interface FeedCardProps {
   post: FeedPost
   className?: string
+  onClick?: () => void
 }
 
 const aspectRatioClasses = {
@@ -28,11 +31,36 @@ const aspectRatioClasses = {
   short: "aspect-square",
 }
 
-export function FeedCard({ post, className }: FeedCardProps) {
+export function FeedCard({ post, className, onClick }: FeedCardProps) {
+  const [isLiked, setIsLiked] = useState(false)
+  const [likes, setLikes] = useState(post.likes)
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
+
+  const handleProfileClick = (e: React.MouseEvent) => {
+    e.stopPropagation() // Ngăn mở modal
+    setIsProfileOpen(true)
+  }
+
+  const handleLike = (e: React.MouseEvent) => {
+    e.stopPropagation() // Ngăn mở modal
+    setIsLiked(!isLiked)
+    setLikes(prev => isLiked ? prev - 1 : prev + 1)
+  }
+
+  const handleBookmark = (e: React.MouseEvent) => {
+    e.stopPropagation() // Ngăn mở modal
+  }
+
+  const formatLikes = (n: number) => {
+    if (n >= 1000) return `${(n / 1000).toFixed(1)}k`
+    return n.toString()
+  }
+
   return (
-    <article 
+    <article
+      onClick={onClick}
       className={cn(
-        "group bg-card rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300",
+        "group bg-card rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 cursor-pointer",
         className
       )}
     >
@@ -57,7 +85,10 @@ export function FeedCard({ post, className }: FeedCardProps) {
         </div>
 
         {/* Bookmark Button */}
-        <button className="absolute top-2 right-2 sm:top-3 sm:right-3 p-1.5 sm:p-2 bg-white/80 backdrop-blur-sm rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white">
+        <button
+          onClick={handleBookmark}
+          className="absolute top-2 right-2 sm:top-3 sm:right-3 p-1.5 sm:p-2 bg-white/80 backdrop-blur-sm rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
+        >
           <Bookmark className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-foreground" />
         </button>
       </div>
@@ -70,7 +101,10 @@ export function FeedCard({ post, className }: FeedCardProps) {
         
         {/* Author & Engagement */}
         <div className="flex items-center justify-between gap-1">
-          <div className="flex items-center gap-1 min-w-0 flex-1">
+          <button
+            onClick={handleProfileClick}
+            className="flex items-center gap-1 min-w-0 flex-1 hover:opacity-80 transition-opacity"
+          >
             <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full overflow-hidden relative bg-muted flex-shrink-0">
               <Image
                 src={post.author.avatar}
@@ -82,16 +116,38 @@ export function FeedCard({ post, className }: FeedCardProps) {
             <span className="text-[10px] sm:text-xs text-muted-foreground font-medium truncate">
               {post.author.name}
             </span>
-          </div>
+          </button>
           
-          <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
-            <Heart className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-muted-foreground" />
-            <span className="text-[10px] sm:text-xs text-muted-foreground font-medium">
-              {post.likes >= 1000 ? `${(post.likes / 1000).toFixed(1)}k` : post.likes}
+          {/* Like Button */}
+          <button
+            onClick={handleLike}
+            className={cn(
+              "flex items-center gap-0.5 sm:gap-1 flex-shrink-0 px-1.5 py-0.5 rounded-full transition-colors",
+              isLiked ? "text-red-500" : "text-muted-foreground hover:text-red-500"
+            )}
+          >
+            <Heart className={cn("w-3 h-3 sm:w-3.5 sm:h-3.5", isLiked && "fill-current")} />
+            <span className="text-[10px] sm:text-xs font-medium">
+              {formatLikes(likes)}
             </span>
-          </div>
+          </button>
         </div>
       </div>
+
+      {/* User Profile Modal */}
+      <UserProfile
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+        user={{
+          id: post.id,
+          name: post.author.name,
+          username: post.author.name.toLowerCase().replace(/\s+/g, ""),
+          avatar: post.author.avatar,
+          followers: 12500,
+          following: 890,
+          posts: 342
+        }}
+      />
     </article>
   )
 }

@@ -2,11 +2,13 @@
 
 import { useState } from "react"
 import Image from "next/image"
-import { 
-  Heart, 
-  MessageCircle, 
-  Repeat2, 
-  Share, 
+import { Comments } from "./comments"
+import { UserProfile } from "./user-profile"
+import {
+  Heart,
+  MessageCircle,
+  Repeat2,
+  Share,
   MoreHorizontal,
   Star,
   MapPin,
@@ -156,21 +158,38 @@ const sampleReviews: Review[] = [
   }
 ]
 
-function ReviewCard({ review, onLike, onRepost }: { 
+function ReviewCard({
+  review,
+  onLike,
+  onRepost,
+  onComment,
+  onUserClick
+}: {
   review: Review
   onLike: (id: string) => void
   onRepost: (id: string) => void
+  onComment: (review: Review) => void
+  onUserClick: (review: Review) => void
 }) {
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
+
   const formatNumber = (num: number) => {
     if (num >= 1000) return `${(num / 1000).toFixed(1)}k`
     return num.toString()
+  }
+
+  const handleUserClick = () => {
+    onUserClick(review)
   }
 
   return (
     <article className="px-4 py-4 border-b border-border/50 hover:bg-muted/30 transition-colors">
       <div className="flex gap-3">
         {/* Avatar */}
-        <div className="flex-shrink-0">
+        <button
+          onClick={handleUserClick}
+          className="flex-shrink-0 hover:opacity-80 transition-opacity"
+        >
           <div className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-full overflow-hidden">
             <Image
               src={review.author.avatar}
@@ -179,16 +198,19 @@ function ReviewCard({ review, onLike, onRepost }: {
               className="object-cover"
             />
           </div>
-        </div>
+        </button>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
           {/* Header */}
           <div className="flex items-center justify-between gap-2 mb-1">
             <div className="flex items-center gap-1 min-w-0">
-              <span className="font-bold text-sm text-foreground truncate">
+              <button
+                onClick={handleUserClick}
+                className="font-bold text-sm text-foreground truncate hover:underline"
+              >
                 {review.author.name}
-              </span>
+              </button>
               {review.author.verified && (
                 <Verified className="w-4 h-4 text-primary flex-shrink-0" fill="currentColor" />
               )}
@@ -271,7 +293,10 @@ function ReviewCard({ review, onLike, onRepost }: {
 
           {/* Actions */}
           <div className="flex items-center justify-between max-w-xs">
-            <button className="flex items-center gap-1.5 text-muted-foreground hover:text-blue-500 transition-colors group">
+            <button
+              onClick={() => onComment(review)}
+              className="flex items-center gap-1.5 text-muted-foreground hover:text-blue-500 transition-colors group"
+            >
               <div className="p-1.5 rounded-full group-hover:bg-blue-500/10 transition-colors">
                 <MessageCircle className="w-4 h-4" />
               </div>
@@ -320,6 +345,10 @@ export function ReviewsFeed() {
   const [reviews, setReviews] = useState<Review[]>(sampleReviews)
   const [isComposing, setIsComposing] = useState(false)
   const [newReview, setNewReview] = useState("")
+  const [selectedReview, setSelectedReview] = useState<Review | null>(null)
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<Review | null>(null)
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
 
   const handleLike = (id: string) => {
     setReviews(prev => prev.map(review => {
@@ -349,7 +378,7 @@ export function ReviewsFeed() {
 
   const handlePost = () => {
     if (!newReview.trim()) return
-    
+
     const newReviewObj: Review = {
       id: Date.now().toString(),
       author: {
@@ -366,10 +395,20 @@ export function ReviewsFeed() {
       liked: false,
       reposted: false
     }
-    
+
     setReviews(prev => [newReviewObj, ...prev])
     setNewReview("")
     setIsComposing(false)
+  }
+
+  const handleComment = (review: Review) => {
+    setSelectedReview(review)
+    setIsCommentsOpen(true)
+  }
+
+  const handleUserClick = (review: Review) => {
+    setSelectedUser(review)
+    setIsProfileOpen(true)
   }
 
   return (
@@ -447,14 +486,43 @@ export function ReviewsFeed() {
       {/* Reviews list */}
       <div className="bg-background">
         {reviews.map((review) => (
-          <ReviewCard 
-            key={review.id} 
-            review={review} 
+          <ReviewCard
+            key={review.id}
+            review={review}
             onLike={handleLike}
             onRepost={handleRepost}
+            onComment={handleComment}
+            onUserClick={handleUserClick}
           />
         ))}
       </div>
+
+      {/* Comments Modal */}
+      <Comments
+        isOpen={isCommentsOpen}
+        onClose={() => setIsCommentsOpen(false)}
+        postId={selectedReview?.id}
+        postTitle={selectedReview?.content?.slice(0, 100) + "..."}
+        postImage={selectedReview?.images?.[0]}
+        postAuthor={selectedReview?.author ? { name: selectedReview.author.name, avatar: selectedReview.author.avatar } : undefined}
+        initialComments={selectedReview?.comments}
+      />
+
+      {/* User Profile Modal */}
+      <UserProfile
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+        user={selectedUser ? {
+          id: selectedUser.id,
+          name: selectedUser.author.name,
+          username: selectedUser.author.username,
+          avatar: selectedUser.author.avatar,
+          followers: 12500,
+          following: 890,
+          posts: 342,
+          isVerified: selectedUser.author.verified
+        } : undefined}
+      />
     </div>
   )
 }

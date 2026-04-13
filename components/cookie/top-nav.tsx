@@ -10,9 +10,10 @@ type Tab = (typeof tabs)[number]
 interface TopNavProps {
   activeTab: Tab
   onTabChange: (tab: Tab) => void
+  onNotificationsClick?: () => void
 }
 
-export function TopNav({ activeTab, onTabChange }: TopNavProps) {
+export function TopNav({ activeTab, onTabChange, onNotificationsClick }: TopNavProps) {
   const [searchFocused, setSearchFocused] = useState(false)
 
   return (
@@ -43,7 +44,10 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
             />
           </div>
           
-          <button className="relative p-1.5 sm:p-2 hover:bg-muted rounded-full transition-colors flex-shrink-0">
+          <button
+            onClick={onNotificationsClick}
+            className="relative p-1.5 sm:p-2 hover:bg-muted rounded-full transition-colors flex-shrink-0"
+          >
             <Bell className="w-5 h-5 text-foreground" />
             <span className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 w-2 h-2 bg-red-500 rounded-full" />
           </button>

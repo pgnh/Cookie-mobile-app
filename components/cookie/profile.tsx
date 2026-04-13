@@ -5,7 +5,8 @@ import Image from "next/image"
 import {
   X, MapPin, Link2, Settings, Share2, Grid3x3,
   ChefHat, Star, Bookmark, Heart, Clock, Flame,
-  BadgeCheck, Edit3, MoreHorizontal, MessageCircle,
+  BadgeCheck, Edit3, MoreHorizontal, MessageCircle, Camera, ImagePlus, Check, ChevronLeft,
+  Moon, Sun, Bell, Shield, User, Lock, HelpCircle, LogOut, ChevronRight, Languages, Eye, EyeOff
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -271,8 +272,41 @@ interface ProfileProps {
 export function Profile({ isOpen, onClose }: ProfileProps) {
   const [activeTab, setActiveTab] = useState<ProfileTab>("Posts")
   const [isFollowing, setIsFollowing] = useState(false)
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  
+  // Profile state (editable)
+  const [profile, setProfile] = useState(userProfile)
+  
+  // Form state
+  const [formData, setFormData] = useState({
+    name: profile.name,
+    username: profile.username,
+    bio: profile.bio,
+    location: profile.location,
+    website: profile.website,
+  })
+  
+  // Settings state
+  const [settings, setSettings] = useState({
+    darkMode: false,
+    notifications: true,
+    pushNotifications: true,
+    emailNotifications: false,
+    privateAccount: false,
+    showActivity: true,
+    language: "English",
+  })
 
   if (!isOpen) return null
+  
+  const handleSaveProfile = () => {
+    setProfile(prev => ({
+      ...prev,
+      ...formData
+    }))
+    setIsEditProfileOpen(false)
+  }
 
   const tabs: { id: ProfileTab; icon: React.ReactNode; label: string }[] = [
     { id: "Posts", icon: <Grid3x3 className="w-4 h-4" />, label: "Posts" },
@@ -295,7 +329,10 @@ export function Profile({ isOpen, onClose }: ProfileProps) {
           <button className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center">
             <Share2 className="w-4 h-4 text-white" />
           </button>
-          <button className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center">
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-black/60 transition-colors"
+          >
             <Settings className="w-4 h-4 text-white" />
           </button>
         </div>
@@ -321,7 +358,19 @@ export function Profile({ isOpen, onClose }: ProfileProps) {
           </div>
           {/* Quick action buttons */}
           <div className="flex items-center gap-2 pb-1">
-            <button className="px-4 py-1.5 rounded-full border border-border text-sm font-semibold text-foreground hover:bg-muted transition-colors">
+            <button
+              onClick={() => {
+                setFormData({
+                  name: profile.name,
+                  username: profile.username,
+                  bio: profile.bio,
+                  location: profile.location,
+                  website: profile.website,
+                })
+                setIsEditProfileOpen(true)
+              }}
+              className="px-4 py-1.5 rounded-full border border-border text-sm font-semibold text-foreground hover:bg-muted transition-colors"
+            >
               Edit Profile
             </button>
             <button className="w-8 h-8 rounded-full border border-border flex items-center justify-center hover:bg-muted transition-colors">
@@ -332,27 +381,27 @@ export function Profile({ isOpen, onClose }: ProfileProps) {
 
         {/* Name + verified */}
         <div className="flex items-center gap-1.5 mb-0.5">
-          <h1 className="text-xl font-bold text-foreground">{userProfile.name}</h1>
-          {userProfile.verified && (
+          <h1 className="text-xl font-bold text-foreground">{profile.name}</h1>
+          {profile.verified && (
             <BadgeCheck className="w-5 h-5 text-primary flex-shrink-0" fill="currentColor" />
           )}
         </div>
-        <p className="text-sm text-muted-foreground mb-2">@{userProfile.username}</p>
+        <p className="text-sm text-muted-foreground mb-2">@{profile.username}</p>
 
         {/* Bio */}
         <p className="text-sm text-foreground leading-relaxed whitespace-pre-line mb-3">
-          {userProfile.bio}
+          {profile.bio}
         </p>
 
         {/* Location + Website */}
         <div className="flex flex-wrap items-center gap-3 mb-4">
           <div className="flex items-center gap-1 text-muted-foreground">
             <MapPin className="w-3.5 h-3.5" />
-            <span className="text-xs">{userProfile.location}</span>
+            <span className="text-xs">{profile.location}</span>
           </div>
           <div className="flex items-center gap-1 text-primary">
             <Link2 className="w-3.5 h-3.5" />
-            <span className="text-xs font-medium">{userProfile.website}</span>
+            <span className="text-xs font-medium">{profile.website}</span>
           </div>
         </div>
 
@@ -421,6 +470,369 @@ export function Profile({ isOpen, onClose }: ProfileProps) {
         {activeTab === "Reviews" && <ReviewList reviews={myReviews} />}
         {activeTab === "Saved" && <PostGrid posts={savedPosts} />}
       </div>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          EDIT PROFILE MODAL
+          ═══════════════════════════════════════════════════════════════ */}
+      {isEditProfileOpen && (
+        <div className="fixed inset-0 z-[100] bg-background overflow-y-auto animate-in slide-in-from-right duration-300">
+          {/* Header */}
+          <div className="sticky top-0 z-50 flex items-center justify-between px-4 py-3 bg-background/95 backdrop-blur-md border-b border-border/50">
+            <button
+              onClick={() => setIsEditProfileOpen(false)}
+              className="flex items-center gap-1 p-2 rounded-full hover:bg-muted transition-colors"
+            >
+              <ChevronLeft className="w-5 h-5 text-foreground" />
+              <span className="text-sm font-medium text-foreground">Cancel</span>
+            </button>
+            <h2 className="font-semibold text-foreground">Edit Profile</h2>
+            <button
+              onClick={handleSaveProfile}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
+            >
+              <Check className="w-4 h-4" />
+              Save
+            </button>
+          </div>
+
+          {/* Cover Photo Edit */}
+          <div className="relative w-full h-40">
+            <Image src={profile.cover} alt="Cover" fill className="object-cover" />
+            <div className="absolute inset-0 bg-black/30" />
+            <button className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+              <div className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center">
+                <Camera className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-white text-sm font-medium">Change Cover</span>
+            </button>
+          </div>
+
+          {/* Avatar Edit */}
+          <div className="px-4 -mt-10 mb-6">
+            <div className="relative inline-block">
+              <div className="w-20 h-20 rounded-full overflow-hidden ring-4 ring-background shadow-lg">
+                <Image src={profile.avatar} alt={profile.name} width={80} height={80} className="object-cover" />
+              </div>
+              <button className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-primary border-2 border-background flex items-center justify-center shadow-sm">
+                <Camera className="w-3.5 h-3.5 text-primary-foreground" />
+              </button>
+            </div>
+          </div>
+
+          {/* Form Fields */}
+          <div className="px-4 space-y-4">
+            {/* Name */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-foreground">Name</label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                placeholder="Your name"
+              />
+            </div>
+
+            {/* Username */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-foreground">Username</label>
+              <div className="flex items-center">
+                <span className="px-4 py-3 rounded-l-xl bg-muted border border-r-0 border-border/50 text-muted-foreground text-sm">@</span>
+                <input
+                  type="text"
+                  value={formData.username}
+                  onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
+                  className="flex-1 px-4 py-3 rounded-r-xl bg-muted border border-border/50 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                  placeholder="username"
+                />
+              </div>
+            </div>
+
+            {/* Bio */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-foreground">Bio</label>
+              <textarea
+                value={formData.bio}
+                onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
+                rows={3}
+                className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all resize-none"
+                placeholder="Tell us about yourself..."
+              />
+              <p className="text-xs text-muted-foreground text-right">{formData.bio.length}/150</p>
+            </div>
+
+            {/* Location */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-foreground">Location</label>
+              <div className="relative">
+                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={formData.location}
+                  onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
+                  className="w-full pl-11 pr-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                  placeholder="City, Country"
+                />
+              </div>
+            </div>
+
+            {/* Website */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-foreground">Website</label>
+              <div className="relative">
+                <Link2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={formData.website}
+                  onChange={(e) => setFormData(prev => ({ ...prev, website: e.target.value }))}
+                  className="w-full pl-11 pr-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                  placeholder="yourwebsite.com"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Footer spacing */}
+          <div className="h-8" />
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════
+          SETTINGS MODAL
+          ═══════════════════════════════════════════════════════════════ */}
+      {isSettingsOpen && (
+        <div className="fixed inset-0 z-[100] bg-background overflow-y-auto animate-in slide-in-from-right duration-300">
+          {/* Header */}
+          <div className="sticky top-0 z-50 flex items-center justify-between px-4 py-3 bg-background/95 backdrop-blur-md border-b border-border/50">
+            <button
+              onClick={() => setIsSettingsOpen(false)}
+              className="flex items-center gap-1 p-2 rounded-full hover:bg-muted transition-colors"
+            >
+              <ChevronLeft className="w-5 h-5 text-foreground" />
+              <span className="text-sm font-medium text-foreground">Back</span>
+            </button>
+            <h2 className="font-semibold text-foreground">Settings</h2>
+            <div className="w-16" /> {/* Spacer for alignment */}
+          </div>
+
+          {/* User Card */}
+          <div className="px-4 py-4">
+            <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-2xl">
+              <div className="w-14 h-14 rounded-full overflow-hidden ring-2 ring-primary/20">
+                <Image src={profile.avatar} alt={profile.name} width={56} height={56} className="object-cover" />
+              </div>
+              <div className="flex-1">
+                <p className="font-bold text-foreground">{profile.name}</p>
+                <p className="text-xs text-muted-foreground">@{profile.username}</p>
+              </div>
+              <button
+                onClick={() => {
+                  setIsSettingsOpen(false)
+                  setIsEditProfileOpen(true)
+                }}
+                className="px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold"
+              >
+                Edit
+              </button>
+            </div>
+          </div>
+
+          {/* Settings Sections */}
+          <div className="px-4 space-y-6 pb-8">
+            {/* Account Section */}
+            <div className="space-y-2">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Account</h3>
+              <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
+                <button className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors border-b border-border/50">
+                  <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center">
+                    <User className="w-4 h-4 text-blue-500" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-medium text-foreground">Account Info</p>
+                    <p className="text-xs text-muted-foreground">Name, email, phone</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                </button>
+                <button className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors border-b border-border/50">
+                  <div className="w-9 h-9 rounded-full bg-green-50 flex items-center justify-center">
+                    <Shield className="w-4 h-4 text-green-500" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-medium text-foreground">Security</p>
+                    <p className="text-xs text-muted-foreground">Password, 2FA</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                </button>
+                <button className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors">
+                  <div className="w-9 h-9 rounded-full bg-purple-50 flex items-center justify-center">
+                    <Lock className="w-4 h-4 text-purple-500" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-medium text-foreground">Privacy</p>
+                    <p className="text-xs text-muted-foreground">Account visibility</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                </button>
+              </div>
+            </div>
+
+            {/* Preferences Section */}
+            <div className="space-y-2">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Preferences</h3>
+              <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
+                {/* Dark Mode Toggle */}
+                <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border/50">
+                  <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center">
+                    {settings.darkMode ? (
+                      <Moon className="w-4 h-4 text-slate-600" />
+                    ) : (
+                      <Sun className="w-4 h-4 text-orange-500" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground">Dark Mode</p>
+                    <p className="text-xs text-muted-foreground">{settings.darkMode ? "On" : "Off"}</p>
+                  </div>
+                  <button
+                    onClick={() => setSettings(prev => ({ ...prev, darkMode: !prev.darkMode }))}
+                    className={cn(
+                      "w-11 h-6 rounded-full transition-colors relative",
+                      settings.darkMode ? "bg-primary" : "bg-muted"
+                    )}
+                  >
+                    <span className={cn(
+                      "absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform",
+                      settings.darkMode ? "translate-x-5.5 left-0.5" : "translate-x-0.5 left-0.5"
+                    )} />
+                  </button>
+                </div>
+
+                {/* Language */}
+                <button className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors border-b border-border/50">
+                  <div className="w-9 h-9 rounded-full bg-indigo-50 flex items-center justify-center">
+                    <Languages className="w-4 h-4 text-indigo-500" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-medium text-foreground">Language</p>
+                    <p className="text-xs text-muted-foreground">{settings.language}</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                </button>
+
+                {/* Notifications Toggle */}
+                <div className="flex items-center gap-3 px-4 py-3.5">
+                  <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center">
+                    <Bell className="w-4 h-4 text-red-500" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground">Notifications</p>
+                    <p className="text-xs text-muted-foreground">{settings.notifications ? "Enabled" : "Disabled"}</p>
+                  </div>
+                  <button
+                    onClick={() => setSettings(prev => ({ ...prev, notifications: !prev.notifications }))}
+                    className={cn(
+                      "w-11 h-6 rounded-full transition-colors relative",
+                      settings.notifications ? "bg-primary" : "bg-muted"
+                    )}
+                  >
+                    <span className={cn(
+                      "absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform",
+                      settings.notifications ? "translate-x-5.5 left-0.5" : "translate-x-0.5 left-0.5"
+                    )} />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Privacy Section */}
+            <div className="space-y-2">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Privacy</h3>
+              <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
+                {/* Private Account */}
+                <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border/50">
+                  <div className="w-9 h-9 rounded-full bg-yellow-50 flex items-center justify-center">
+                    {settings.privateAccount ? (
+                      <Lock className="w-4 h-4 text-yellow-600" />
+                    ) : (
+                      <Eye className="w-4 h-4 text-yellow-500" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground">Private Account</p>
+                    <p className="text-xs text-muted-foreground">{settings.privateAccount ? "Only followers can see" : "Everyone can see"}</p>
+                  </div>
+                  <button
+                    onClick={() => setSettings(prev => ({ ...prev, privateAccount: !prev.privateAccount }))}
+                    className={cn(
+                      "w-11 h-6 rounded-full transition-colors relative",
+                      settings.privateAccount ? "bg-primary" : "bg-muted"
+                    )}
+                  >
+                    <span className={cn(
+                      "absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform",
+                      settings.privateAccount ? "translate-x-5.5 left-0.5" : "translate-x-0.5 left-0.5"
+                    )} />
+                  </button>
+                </div>
+
+                {/* Show Activity */}
+                <div className="flex items-center gap-3 px-4 py-3.5">
+                  <div className="w-9 h-9 rounded-full bg-teal-50 flex items-center justify-center">
+                    <EyeOff className="w-4 h-4 text-teal-500" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground">Activity Status</p>
+                    <p className="text-xs text-muted-foreground">{settings.showActivity ? "Visible" : "Hidden"}</p>
+                  </div>
+                  <button
+                    onClick={() => setSettings(prev => ({ ...prev, showActivity: !prev.showActivity }))}
+                    className={cn(
+                      "w-11 h-6 rounded-full transition-colors relative",
+                      settings.showActivity ? "bg-primary" : "bg-muted"
+                    )}
+                  >
+                    <span className={cn(
+                      "absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform",
+                      settings.showActivity ? "translate-x-5.5 left-0.5" : "translate-x-0.5 left-0.5"
+                    )} />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Support Section */}
+            <div className="space-y-2">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Support</h3>
+              <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
+                <button className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors border-b border-border/50">
+                  <div className="w-9 h-9 rounded-full bg-pink-50 flex items-center justify-center">
+                    <HelpCircle className="w-4 h-4 text-pink-500" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-medium text-foreground">Help Center</p>
+                    <p className="text-xs text-muted-foreground">FAQs and support</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                </button>
+                <button className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors">
+                  <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center">
+                    <LogOut className="w-4 h-4 text-gray-500" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-medium text-destructive">Log Out</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* App Info */}
+            <div className="text-center pt-4">
+              <p className="text-xs text-muted-foreground">Cookie App v1.0.0</p>
+              <p className="text-xs text-muted-foreground">© 2026 Cookie Inc.</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
