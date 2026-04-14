@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import Image from "next/image"
-import { useI18n } from "@/lib/i18n"
 import {
   X, MapPin, Link2, Settings, Share2, Grid3x3,
   ChefHat, Star, Bookmark, Heart, Clock, Flame,
@@ -269,10 +268,11 @@ function ReviewList({ reviews }: { reviews: typeof myReviews }) {
 interface ProfileProps {
   isOpen: boolean
   onClose: () => void
+  user?: import("@supabase/supabase-js").User | null
+  onLogout?: () => void | Promise<void>
 }
 
-export function Profile({ isOpen, onClose }: ProfileProps) {
-  const { t, language, setLanguage } = useI18n()
+export function Profile({ isOpen, onClose, user, onLogout }: ProfileProps) {
   const [activeTab, setActiveTab] = useState<ProfileTab>("Posts")
   const [isFollowing, setIsFollowing] = useState(false)
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false)
@@ -295,10 +295,10 @@ export function Profile({ isOpen, onClose }: ProfileProps) {
     "main" | "account-info" | "security" | "privacy" | "notifications" | "language"
   >("main")
 
-  // Settings state (sync language with i18n context)
+  // Settings state
   const [settings, setSettings] = useState({
     darkMode: false,
-    language: language,
+    language: "English",
     // Notifications
     notifications: true,
     pushNotifications: true,
@@ -645,9 +645,9 @@ export function Profile({ isOpen, onClose }: ProfileProps) {
                   className="flex items-center gap-1 p-2 rounded-full hover:bg-muted transition-colors"
                 >
                   <ChevronLeft className="w-5 h-5 text-foreground" />
-                  <span className="text-sm font-medium text-foreground">{t("settings.back")}</span>
+                  <span className="text-sm font-medium text-foreground">Back</span>
                 </button>
-                <h2 className="font-semibold text-foreground">{t("settings.title")}</h2>
+                <h2 className="font-semibold text-foreground">Settings</h2>
                 <div className="w-16" />
               </div>
 
@@ -664,7 +664,7 @@ export function Profile({ isOpen, onClose }: ProfileProps) {
                     onClick={() => { setIsSettingsOpen(false); setSettingsScreen("main"); setIsEditProfileOpen(true) }}
                     className="px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold"
                   >
-                    {t("settings.edit")}
+                    Edit
                   </button>
                 </div>
               </div>
@@ -672,15 +672,15 @@ export function Profile({ isOpen, onClose }: ProfileProps) {
               <div className="px-4 space-y-6 pb-8">
                 {/* Account Section */}
                 <div className="space-y-2">
-                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">{t("settings.account")}</h3>
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Account</h3>
                   <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
                     <button onClick={() => setSettingsScreen("account-info")} className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors border-b border-border/50">
                       <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center">
                         <User className="w-4 h-4 text-blue-500" />
                       </div>
                       <div className="flex-1 text-left">
-                        <p className="text-sm font-medium text-foreground">{t("account.info.title")}</p>
-                        <p className="text-xs text-muted-foreground">{t("account.info.subtitle")}</p>
+                        <p className="text-sm font-medium text-foreground">Account Info</p>
+                        <p className="text-xs text-muted-foreground">Name, email, phone</p>
                       </div>
                       <ChevronRight className="w-4 h-4 text-muted-foreground" />
                     </button>
@@ -689,8 +689,8 @@ export function Profile({ isOpen, onClose }: ProfileProps) {
                         <Shield className="w-4 h-4 text-green-500" />
                       </div>
                       <div className="flex-1 text-left">
-                        <p className="text-sm font-medium text-foreground">{t("security.title")}</p>
-                        <p className="text-xs text-muted-foreground">{t("security.subtitle")}</p>
+                        <p className="text-sm font-medium text-foreground">Security</p>
+                        <p className="text-xs text-muted-foreground">Password, 2FA, login alerts</p>
                       </div>
                       <ChevronRight className="w-4 h-4 text-muted-foreground" />
                     </button>
@@ -699,8 +699,8 @@ export function Profile({ isOpen, onClose }: ProfileProps) {
                         <Lock className="w-4 h-4 text-purple-500" />
                       </div>
                       <div className="flex-1 text-left">
-                        <p className="text-sm font-medium text-foreground">{t("privacy.title")}</p>
-                        <p className="text-xs text-muted-foreground">{t("privacy.subtitle")}</p>
+                        <p className="text-sm font-medium text-foreground">Privacy</p>
+                        <p className="text-xs text-muted-foreground">Account visibility, data</p>
                       </div>
                       <ChevronRight className="w-4 h-4 text-muted-foreground" />
                     </button>
@@ -709,7 +709,7 @@ export function Profile({ isOpen, onClose }: ProfileProps) {
 
                 {/* Preferences Section */}
                 <div className="space-y-2">
-                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">{t("settings.preferences")}</h3>
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Preferences</h3>
                   <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
                     {/* Dark Mode Toggle */}
                     <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border/50">
@@ -717,8 +717,8 @@ export function Profile({ isOpen, onClose }: ProfileProps) {
                         {settings.darkMode ? <Moon className="w-4 h-4 text-slate-200" /> : <Sun className="w-4 h-4 text-amber-500" />}
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-foreground">{t("darkmode.title")}</p>
-                        <p className="text-xs text-muted-foreground">{settings.darkMode ? t("darkmode.on") : t("darkmode.off")}</p>
+                        <p className="text-sm font-medium text-foreground">Dark Mode</p>
+                        <p className="text-xs text-muted-foreground">{settings.darkMode ? "On — Dark theme active" : "Off — Light theme active"}</p>
                       </div>
                       <button
                         onClick={() => handleDarkMode(!settings.darkMode)}
@@ -733,8 +733,8 @@ export function Profile({ isOpen, onClose }: ProfileProps) {
                         <Languages className="w-4 h-4 text-indigo-500" />
                       </div>
                       <div className="flex-1 text-left">
-                        <p className="text-sm font-medium text-foreground">{t("language.title")}</p>
-                        <p className="text-xs text-muted-foreground">{language === "English" ? "🇺🇸 English" : "🇻🇳 Tiếng Việt"}</p>
+                        <p className="text-sm font-medium text-foreground">Language</p>
+                        <p className="text-xs text-muted-foreground">{settings.language === "English" ? "🇺🇸 English" : "🇻🇳 Tiếng Việt"}</p>
                       </div>
                       <ChevronRight className="w-4 h-4 text-muted-foreground" />
                     </button>
@@ -744,8 +744,8 @@ export function Profile({ isOpen, onClose }: ProfileProps) {
                         <Bell className="w-4 h-4 text-red-500" />
                       </div>
                       <div className="flex-1 text-left">
-                        <p className="text-sm font-medium text-foreground">{t("notifications.title")}</p>
-                        <p className="text-xs text-muted-foreground">{settings.notifications ? t("notifications.enabled") : t("notifications.disabled")}</p>
+                        <p className="text-sm font-medium text-foreground">Notifications</p>
+                        <p className="text-xs text-muted-foreground">{settings.notifications ? "Enabled" : "Disabled"}</p>
                       </div>
                       <ChevronRight className="w-4 h-4 text-muted-foreground" />
                     </button>
@@ -754,15 +754,15 @@ export function Profile({ isOpen, onClose }: ProfileProps) {
 
                 {/* Privacy Quick Toggles */}
                 <div className="space-y-2">
-                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">{t("settings.privacy")}</h3>
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Privacy</h3>
                   <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
                     <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border/50">
                       <div className={cn("w-9 h-9 rounded-full flex items-center justify-center transition-colors", settings.privateAccount ? "bg-yellow-100" : "bg-yellow-50")}>
                         {settings.privateAccount ? <Lock className="w-4 h-4 text-yellow-600" /> : <Eye className="w-4 h-4 text-yellow-500" />}
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-foreground">{t("privateAccount.title")}</p>
-                        <p className="text-xs text-muted-foreground">{settings.privateAccount ? t("privateAccount.on") : t("privateAccount.off")}</p>
+                        <p className="text-sm font-medium text-foreground">Private Account</p>
+                        <p className="text-xs text-muted-foreground">{settings.privateAccount ? "Only followers can see" : "Everyone can see"}</p>
                       </div>
                       <button
                         onClick={() => setSettings(prev => ({ ...prev, privateAccount: !prev.privateAccount }))}
@@ -776,8 +776,8 @@ export function Profile({ isOpen, onClose }: ProfileProps) {
                         {settings.activeStatus ? <Activity className="w-4 h-4 text-teal-500" /> : <EyeOff className="w-4 h-4 text-teal-400" />}
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-foreground">{t("activeStatus.title")}</p>
-                        <p className="text-xs text-muted-foreground">{settings.activeStatus ? t("activeStatus.on") : t("activeStatus.off")}</p>
+                        <p className="text-sm font-medium text-foreground">Active Status</p>
+                        <p className="text-xs text-muted-foreground">{settings.activeStatus ? "Others can see you're active" : "Active status hidden"}</p>
                       </div>
                       <button
                         onClick={() => setSettings(prev => ({ ...prev, activeStatus: !prev.activeStatus }))}
@@ -791,24 +791,27 @@ export function Profile({ isOpen, onClose }: ProfileProps) {
 
                 {/* Support Section */}
                 <div className="space-y-2">
-                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">{t("settings.support")}</h3>
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Support</h3>
                   <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
                     <button className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors border-b border-border/50">
                       <div className="w-9 h-9 rounded-full bg-pink-50 flex items-center justify-center">
                         <HelpCircle className="w-4 h-4 text-pink-500" />
                       </div>
                       <div className="flex-1 text-left">
-                        <p className="text-sm font-medium text-foreground">{t("settings.help")}</p>
+                        <p className="text-sm font-medium text-foreground">Help Center</p>
                         <p className="text-xs text-muted-foreground">FAQs and support</p>
                       </div>
                       <ChevronRight className="w-4 h-4 text-muted-foreground" />
                     </button>
-                    <button className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors">
+                    <button 
+                      onClick={onLogout}
+                      className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors"
+                    >
                       <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center">
                         <LogOut className="w-4 h-4 text-gray-500" />
                       </div>
                       <div className="flex-1 text-left">
-                        <p className="text-sm font-medium text-destructive">{t("settings.logout")}</p>
+                        <p className="text-sm font-medium text-destructive">Log Out</p>
                       </div>
                     </button>
                   </div>
@@ -1208,25 +1211,22 @@ export function Profile({ isOpen, onClose }: ProfileProps) {
               <div className="sticky top-0 z-50 flex items-center justify-between px-4 py-3 bg-background/95 backdrop-blur-md border-b border-border/50">
                 <button onClick={() => setSettingsScreen("main")} className="flex items-center gap-1 p-2 rounded-full hover:bg-muted transition-colors">
                   <ChevronLeft className="w-5 h-5 text-foreground" />
-                  <span className="text-sm font-medium text-foreground">{t("settings.back")}</span>
+                  <span className="text-sm font-medium text-foreground">Back</span>
                 </button>
-                <h2 className="font-semibold text-foreground">{t("language.header")}</h2>
+                <h2 className="font-semibold text-foreground">Language</h2>
                 <div className="w-16" />
               </div>
 
               <div className="px-4 pt-5 pb-8">
-                <p className="text-sm text-muted-foreground mb-4 px-1">{t("language.subtitle")}</p>
+                <p className="text-sm text-muted-foreground mb-4 px-1">Choose your preferred language for the app interface.</p>
                 <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
                   {[
-                    { code: "English" as const, label: t("language.english"), flag: "🇺🇸" },
-                    { code: "Vietnamese" as const, label: t("language.vietnamese"), flag: "🇻🇳" },
+                    { code: "English", label: "English", flag: "🇺🇸", sublabel: "English (US)" },
+                    { code: "Vietnamese", label: "Tiếng Việt", flag: "🇻🇳", sublabel: "Vietnamese" },
                   ].map((lang, i, arr) => (
                     <button
                       key={lang.code}
-                      onClick={() => {
-                        setLanguage(lang.code)
-                        setSettings(prev => ({ ...prev, language: lang.code }))
-                      }}
+                      onClick={() => setSettings(prev => ({ ...prev, language: lang.code }))}
                       className={cn(
                         "w-full flex items-center gap-4 px-4 py-4 hover:bg-muted/50 transition-colors",
                         i < arr.length - 1 && "border-b border-border/50"
@@ -1235,12 +1235,13 @@ export function Profile({ isOpen, onClose }: ProfileProps) {
                       <span className="text-2xl">{lang.flag}</span>
                       <div className="flex-1 text-left">
                         <p className="text-sm font-semibold text-foreground">{lang.label}</p>
+                        <p className="text-xs text-muted-foreground">{lang.sublabel}</p>
                       </div>
                       <div className={cn(
                         "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
-                        language === lang.code ? "border-primary bg-primary" : "border-border"
+                        settings.language === lang.code ? "border-primary bg-primary" : "border-border"
                       )}>
-                        {language === lang.code && <Check className="w-3 h-3 text-primary-foreground" />}
+                        {settings.language === lang.code && <Check className="w-3 h-3 text-primary-foreground" />}
                       </div>
                     </button>
                   ))}

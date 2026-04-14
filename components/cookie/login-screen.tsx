@@ -4,21 +4,89 @@ import { useState } from "react"
 import { motion } from "framer-motion"
 import { Chrome, Apple, Phone, ArrowRight, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { createBrowserClient } from "@/lib/supabase"
 
 interface LoginScreenProps {
-  onLogin: (method: "google" | "apple" | "phone") => void
+  onLogin?: (method: "google" | "apple" | "phone") => void
   onSkip?: () => void
 }
 
 export function LoginScreen({ onLogin, onSkip }: LoginScreenProps) {
   const [isLoading, setIsLoading] = useState<string | null>(null)
+  const [showPhoneInput, setShowPhoneInput] = useState(false)
+  const [phoneNumber, setPhoneNumber] = useState("")
+  const [otpCode, setOtpCode] = useState("")
+  const [showOtpInput, setShowOtpInput] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleLogin = async (method: "google" | "apple" | "phone") => {
-    setIsLoading(method)
-    // Simulate loading for smooth UX
-    await new Promise(resolve => setTimeout(resolve, 500))
-    onLogin(method)
-    setIsLoading(null)
+  const supabase = createBrowserClient()
+
+  const handleOAuthLogin = async (provider: "google" | "apple") => {
+    setIsLoading(provider)
+    setError(null)
+    
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    })
+
+    if (error) {
+      setError(error.message)
+      setIsLoading(null)
+    }
+    // onLogin callback is handled by callback route
+  }
+
+  const handlePhoneLogin = async () => {
+    if (!showPhoneInput) {
+      setShowPhoneInput(true)
+      return
+    }
+
+    if (!phoneNumber) {
+      setError("Please enter your phone number")
+      return
+    }
+
+    setIsLoading("phone")
+    setError(null)
+
+    const { error } = await supabase.auth.signInWithOtp({
+      phone: phoneNumber,
+    })
+
+    if (error) {
+      setError(error.message)
+      setIsLoading(null)
+    } else {
+      setShowOtpInput(true)
+      setIsLoading(null)
+    }
+  }
+
+  const verifyOtp = async () => {
+    if (!otpCode) {
+      setError("Please enter the OTP code")
+      return
+    }
+
+    setIsLoading("otp")
+    setError(null)
+
+    const { error } = await supabase.auth.verifyOtp({
+      phone: phoneNumber,
+      token: otpCode,
+      type: "sms",
+    })
+
+    if (error) {
+      setError(error.message)
+      setIsLoading(null)
+    } else {
+      onLogin?.("phone")
+    }
   }
 
   const loginButtons = [
@@ -29,7 +97,8 @@ export function LoginScreen({ onLogin, onSkip }: LoginScreenProps) {
       bgColor: "bg-white",
       textColor: "text-gray-700",
       border: "border border-gray-300",
-      shadow: "shadow-sm"
+      shadow: "shadow-sm",
+      onClick: () => handleOAuthLogin("google")
     },
     {
       id: "apple" as const,
@@ -38,16 +107,18 @@ export function LoginScreen({ onLogin, onSkip }: LoginScreenProps) {
       bgColor: "bg-black",
       textColor: "text-white",
       border: "border border-black",
-      shadow: ""
+      shadow: "",
+      onClick: () => handleOAuthLogin("apple")
     },
     {
       id: "phone" as const,
-      label: "Continue with Phone",
+      label: showPhoneInput ? "Send OTP" : "Continue with Phone",
       icon: Phone,
       bgColor: "bg-[#FFEE00]",
       textColor: "text-black",
       border: "",
-      shadow: "shadow-sm"
+      shadow: "shadow-sm",
+      onClick: handlePhoneLogin
     }
   ]
 
@@ -118,7 +189,7 @@ export function LoginScreen({ onLogin, onSkip }: LoginScreenProps) {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.6 + index * 0.1, duration: 0.4 }}
-              onClick={() => handleLogin(button.id)}
+              onClick={button.onClick}
               disabled={isLoading !== null}
               className={cn(
                 "w-full py-3.5 px-4 rounded-full flex items-center justify-center gap-3",
@@ -142,12 +213,76 @@ export function LoginScreen({ onLogin, onSkip }: LoginScreenProps) {
             </motion.button>
           ))}
 
+          {/* Phone Input */}
+          {showPhoneInput && !showOtpInput && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="space-y-2"
+            >
+              <input
+                type="tel"
+                placeholder="+84 123 456 789"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                className="w-full px-4 py-3 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#FFEE00] text-sm"
+              />
+            </motion.div>
+          )}
+
+          {/* OTP Input */}
+          {showOtpInput && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="space-y-3"
+            >
+              <p className="text-sm text-gray-600 text-center">
+                Enter the code sent to {phoneNumber}
+              </p>
+              <input
+                type="text"
+                placeholder="123456"
+                value={otpCode}
+                onChange={(e) => setOtpCode(e.target.value)}
+                className="w-full px-4 py-3 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#FFEE00] text-sm text-center tracking-widest"
+                maxLength={6}
+              />
+              <button
+                onClick={verifyOtp}
+                disabled={isLoading === "otp"}
+                className="w-full py-3 rounded-full bg-black text-white font-semibold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-70"
+              >
+                {isLoading === "otp" ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" />
+                ) : (
+                  "Verify Code"
+                )}
+              </button>
+            </motion.div>
+          )}
+
+          {/* Error Display */}
+          {error && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center text-sm text-red-500"
+            >
+              {error}
+            </motion.p>
+          )}
+
           {/* Divider */}
-          <div className="flex items-center gap-4 py-2">
-            <div className="flex-1 h-px bg-gray-200" />
-            <span className="text-xs text-gray-400 uppercase tracking-wider">or</span>
-            <div className="flex-1 h-px bg-gray-200" />
-          </div>
+          {!showPhoneInput && (
+            <div className="flex items-center gap-4 py-2">
+              <div className="flex-1 h-px bg-gray-200" />
+              <span className="text-xs text-gray-400 uppercase tracking-wider">or</span>
+              <div className="flex-1 h-px bg-gray-200" />
+            </div>
+          )}
 
           {/* Skip / Explore as Guest */}
           <motion.button

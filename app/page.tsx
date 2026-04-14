@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { TopNav } from "@/components/cookie/top-nav"
 import { BottomNav } from "@/components/cookie/bottom-nav"
 import { MasonryFeed } from "@/components/cookie/masonry-feed"
@@ -12,6 +12,8 @@ import { Profile } from "@/components/cookie/profile"
 import { Notifications } from "@/components/cookie/notifications"
 import { SplashScreen } from "@/components/cookie/splash-screen"
 import { LoginScreen } from "@/components/cookie/login-screen"
+import { createBrowserClient } from "@/lib/supabase"
+import { User } from "@supabase/supabase-js"
 
 type Tab = "Explore" | "Reviews"
 
@@ -24,24 +26,56 @@ export default function CookieApp() {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
   const [showSplash, setShowSplash] = useState(true)
   const [showLogin, setShowLogin] = useState(false)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [user, setUser] = useState<User | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  const supabase = createBrowserClient()
+
+  // Check auth state on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      setUser(session?.user ?? null)
+      setIsLoading(false)
+      
+      // After splash, show login if not authenticated
+      if (!session?.user) {
+        setShowLogin(true)
+      }
+    }
+
+    checkAuth()
+
+    // Subscribe to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null)
+        if (session?.user) {
+          setShowLogin(false)
+        }
+      }
+    )
+
+    return () => subscription.unsubscribe()
+  }, [])
 
   const handleSplashComplete = () => {
     setShowSplash(false)
-    // Show login screen after splash
-    setShowLogin(true)
   }
 
   const handleLogin = (method: "google" | "apple" | "phone") => {
-    console.log(`[Auth] Logging in with ${method}`)
-    // TODO: Implement Supabase auth here
-    setIsAuthenticated(true)
-    setShowLogin(false)
+    console.log(`[Auth] Successfully logged in with ${method}`)
+    // Auth state is handled by onAuthStateChange listener
   }
 
   const handleSkipLogin = () => {
     console.log("[Auth] Skipping login, exploring as guest")
     setShowLogin(false)
+  }
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    setShowLogin(true)
   }
 
   if (showSplash) {
@@ -93,6 +127,8 @@ export default function CookieApp() {
       <Profile
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
+        user={user}
+        onLogout={handleLogout}
       />
 
       <Notifications

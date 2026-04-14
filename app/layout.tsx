@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from 'next'
 import { DM_Sans } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
-import { I18nProvider } from '@/lib/i18n'
 
 const dmSans = DM_Sans({ 
   subsets: ["latin"],
@@ -49,9 +48,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${dmSans.variable} font-sans antialiased`}>
-        <I18nProvider>
-          {children}
-        </I18nProvider>
+        {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
