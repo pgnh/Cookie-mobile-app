@@ -6,7 +6,8 @@ import {
   X, MapPin, Link2, Settings, Share2, Grid3x3,
   ChefHat, Star, Bookmark, Heart, Clock, Flame,
   BadgeCheck, Edit3, MoreHorizontal, MessageCircle, Camera, ImagePlus, Check, ChevronLeft,
-  Moon, Sun, Bell, Shield, User, Lock, HelpCircle, LogOut, ChevronRight, Languages, Eye, EyeOff
+  Moon, Sun, Bell, Shield, User, Lock, HelpCircle, LogOut, ChevronRight, Languages, Eye, EyeOff,
+  KeyRound, Mail, Smartphone, Calendar, Download, Trash2, UserX, AtSign, Tag, Activity
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -287,19 +288,49 @@ export function Profile({ isOpen, onClose }: ProfileProps) {
     website: profile.website,
   })
   
+  // Settings navigation
+  const [settingsScreen, setSettingsScreen] = useState<
+    "main" | "account-info" | "security" | "privacy" | "notifications" | "language"
+  >("main")
+
   // Settings state
   const [settings, setSettings] = useState({
     darkMode: false,
+    language: "English",
+    // Notifications
     notifications: true,
     pushNotifications: true,
     emailNotifications: false,
+    likeNotifications: true,
+    commentNotifications: true,
+    followNotifications: true,
+    messageNotifications: true,
+    mentionNotifications: true,
+    // Privacy
     privateAccount: false,
-    showActivity: true,
-    language: "English",
+    activeStatus: true,
+    whoCanComment: "Everyone",
+    whoCanDM: "Everyone",
+    whoCanTag: "Everyone",
+    // Security
+    twoFactorAuth: false,
+    loginAlerts: true,
+    // Account
+    email: "alex@example.com",
+    phone: "+1 (555) 123-4567",
+    dateOfBirth: "January 15, 1995",
+    gender: "Prefer not to say",
   })
 
   if (!isOpen) return null
-  
+
+  const handleDarkMode = (value: boolean) => {
+    setSettings(prev => ({ ...prev, darkMode: value }))
+    if (typeof document !== 'undefined') {
+      document.documentElement.classList.toggle('dark', value)
+    }
+  }
+
   const handleSaveProfile = () => {
     setProfile(prev => ({
       ...prev,
@@ -598,239 +629,711 @@ export function Profile({ isOpen, onClose }: ProfileProps) {
       )}
 
       {/* ═══════════════════════════════════════════════════════════════
-          SETTINGS MODAL
+          SETTINGS MODAL — multi-screen navigation
           ═══════════════════════════════════════════════════════════════ */}
       {isSettingsOpen && (
-        <div className="fixed inset-0 z-[100] bg-background overflow-y-auto animate-in slide-in-from-right duration-300">
-          {/* Header */}
-          <div className="sticky top-0 z-50 flex items-center justify-between px-4 py-3 bg-background/95 backdrop-blur-md border-b border-border/50">
-            <button
-              onClick={() => setIsSettingsOpen(false)}
-              className="flex items-center gap-1 p-2 rounded-full hover:bg-muted transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5 text-foreground" />
-              <span className="text-sm font-medium text-foreground">Back</span>
-            </button>
-            <h2 className="font-semibold text-foreground">Settings</h2>
-            <div className="w-16" /> {/* Spacer for alignment */}
-          </div>
+        <div className="fixed inset-0 z-[100] bg-background animate-in slide-in-from-right duration-300">
 
-          {/* User Card */}
-          <div className="px-4 py-4">
-            <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-2xl">
-              <div className="w-14 h-14 rounded-full overflow-hidden ring-2 ring-primary/20">
-                <Image src={profile.avatar} alt={profile.name} width={56} height={56} className="object-cover" />
+          {/* ─── MAIN SETTINGS ─── */}
+          {settingsScreen === "main" && (
+            <div className="h-full overflow-y-auto">
+              <div className="sticky top-0 z-50 flex items-center justify-between px-4 py-3 bg-background/95 backdrop-blur-md border-b border-border/50">
+                <button
+                  onClick={() => { setIsSettingsOpen(false); setSettingsScreen("main") }}
+                  className="flex items-center gap-1 p-2 rounded-full hover:bg-muted transition-colors"
+                >
+                  <ChevronLeft className="w-5 h-5 text-foreground" />
+                  <span className="text-sm font-medium text-foreground">Back</span>
+                </button>
+                <h2 className="font-semibold text-foreground">Settings</h2>
+                <div className="w-16" />
               </div>
-              <div className="flex-1">
-                <p className="font-bold text-foreground">{profile.name}</p>
+
+              <div className="px-4 py-4">
+                <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-2xl">
+                  <div className="w-14 h-14 rounded-full overflow-hidden ring-2 ring-primary/20">
+                    <Image src={profile.avatar} alt={profile.name} width={56} height={56} className="object-cover" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-bold text-foreground">{profile.name}</p>
+                    <p className="text-xs text-muted-foreground">@{profile.username}</p>
+                  </div>
+                  <button
+                    onClick={() => { setIsSettingsOpen(false); setSettingsScreen("main"); setIsEditProfileOpen(true) }}
+                    className="px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold"
+                  >
+                    Edit
+                  </button>
+                </div>
+              </div>
+
+              <div className="px-4 space-y-6 pb-8">
+                {/* Account Section */}
+                <div className="space-y-2">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Account</h3>
+                  <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
+                    <button onClick={() => setSettingsScreen("account-info")} className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors border-b border-border/50">
+                      <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center">
+                        <User className="w-4 h-4 text-blue-500" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="text-sm font-medium text-foreground">Account Info</p>
+                        <p className="text-xs text-muted-foreground">Name, email, phone</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                    <button onClick={() => setSettingsScreen("security")} className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors border-b border-border/50">
+                      <div className="w-9 h-9 rounded-full bg-green-50 flex items-center justify-center">
+                        <Shield className="w-4 h-4 text-green-500" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="text-sm font-medium text-foreground">Security</p>
+                        <p className="text-xs text-muted-foreground">Password, 2FA, login alerts</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                    <button onClick={() => setSettingsScreen("privacy")} className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors">
+                      <div className="w-9 h-9 rounded-full bg-purple-50 flex items-center justify-center">
+                        <Lock className="w-4 h-4 text-purple-500" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="text-sm font-medium text-foreground">Privacy</p>
+                        <p className="text-xs text-muted-foreground">Account visibility, data</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Preferences Section */}
+                <div className="space-y-2">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Preferences</h3>
+                  <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
+                    {/* Dark Mode Toggle */}
+                    <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border/50">
+                      <div className={cn("w-9 h-9 rounded-full flex items-center justify-center transition-colors", settings.darkMode ? "bg-slate-800" : "bg-amber-50")}>
+                        {settings.darkMode ? <Moon className="w-4 h-4 text-slate-200" /> : <Sun className="w-4 h-4 text-amber-500" />}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-foreground">Dark Mode</p>
+                        <p className="text-xs text-muted-foreground">{settings.darkMode ? "On — Dark theme active" : "Off — Light theme active"}</p>
+                      </div>
+                      <button
+                        onClick={() => handleDarkMode(!settings.darkMode)}
+                        className={cn("w-11 h-6 rounded-full transition-all duration-300 relative flex-shrink-0", settings.darkMode ? "bg-foreground" : "bg-muted")}
+                      >
+                        <span className={cn("absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-300", settings.darkMode ? "translate-x-5" : "translate-x-0")} />
+                      </button>
+                    </div>
+                    {/* Language */}
+                    <button onClick={() => setSettingsScreen("language")} className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors border-b border-border/50">
+                      <div className="w-9 h-9 rounded-full bg-indigo-50 flex items-center justify-center">
+                        <Languages className="w-4 h-4 text-indigo-500" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="text-sm font-medium text-foreground">Language</p>
+                        <p className="text-xs text-muted-foreground">{settings.language === "English" ? "🇺🇸 English" : "🇻🇳 Tiếng Việt"}</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                    {/* Notifications */}
+                    <button onClick={() => setSettingsScreen("notifications")} className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors">
+                      <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center">
+                        <Bell className="w-4 h-4 text-red-500" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="text-sm font-medium text-foreground">Notifications</p>
+                        <p className="text-xs text-muted-foreground">{settings.notifications ? "Enabled" : "Disabled"}</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Privacy Quick Toggles */}
+                <div className="space-y-2">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Privacy</h3>
+                  <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
+                    <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border/50">
+                      <div className={cn("w-9 h-9 rounded-full flex items-center justify-center transition-colors", settings.privateAccount ? "bg-yellow-100" : "bg-yellow-50")}>
+                        {settings.privateAccount ? <Lock className="w-4 h-4 text-yellow-600" /> : <Eye className="w-4 h-4 text-yellow-500" />}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-foreground">Private Account</p>
+                        <p className="text-xs text-muted-foreground">{settings.privateAccount ? "Only followers can see" : "Everyone can see"}</p>
+                      </div>
+                      <button
+                        onClick={() => setSettings(prev => ({ ...prev, privateAccount: !prev.privateAccount }))}
+                        className={cn("w-11 h-6 rounded-full transition-all duration-300 relative flex-shrink-0", settings.privateAccount ? "bg-primary" : "bg-muted")}
+                      >
+                        <span className={cn("absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-300", settings.privateAccount ? "translate-x-5" : "translate-x-0")} />
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-3 px-4 py-3.5">
+                      <div className="w-9 h-9 rounded-full bg-teal-50 flex items-center justify-center">
+                        {settings.activeStatus ? <Activity className="w-4 h-4 text-teal-500" /> : <EyeOff className="w-4 h-4 text-teal-400" />}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-foreground">Active Status</p>
+                        <p className="text-xs text-muted-foreground">{settings.activeStatus ? "Others can see you're active" : "Active status hidden"}</p>
+                      </div>
+                      <button
+                        onClick={() => setSettings(prev => ({ ...prev, activeStatus: !prev.activeStatus }))}
+                        className={cn("w-11 h-6 rounded-full transition-all duration-300 relative flex-shrink-0", settings.activeStatus ? "bg-primary" : "bg-muted")}
+                      >
+                        <span className={cn("absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-300", settings.activeStatus ? "translate-x-5" : "translate-x-0")} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Support Section */}
+                <div className="space-y-2">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Support</h3>
+                  <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
+                    <button className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors border-b border-border/50">
+                      <div className="w-9 h-9 rounded-full bg-pink-50 flex items-center justify-center">
+                        <HelpCircle className="w-4 h-4 text-pink-500" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="text-sm font-medium text-foreground">Help Center</p>
+                        <p className="text-xs text-muted-foreground">FAQs and support</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                    <button className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors">
+                      <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center">
+                        <LogOut className="w-4 h-4 text-gray-500" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="text-sm font-medium text-destructive">Log Out</p>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="text-center pt-2">
+                  <p className="text-xs text-muted-foreground">Cookie App v1.0.0</p>
+                  <p className="text-xs text-muted-foreground">© 2026 Cookie Inc.</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ─── ACCOUNT INFO SCREEN ─── */}
+          {settingsScreen === "account-info" && (
+            <div className="h-full overflow-y-auto">
+              <div className="sticky top-0 z-50 flex items-center justify-between px-4 py-3 bg-background/95 backdrop-blur-md border-b border-border/50">
+                <button onClick={() => setSettingsScreen("main")} className="flex items-center gap-1 p-2 rounded-full hover:bg-muted transition-colors">
+                  <ChevronLeft className="w-5 h-5 text-foreground" />
+                  <span className="text-sm font-medium text-foreground">Back</span>
+                </button>
+                <h2 className="font-semibold text-foreground">Account Info</h2>
+                <div className="w-16" />
+              </div>
+
+              <div className="flex flex-col items-center py-6">
+                <div className="relative">
+                  <div className="w-20 h-20 rounded-full overflow-hidden ring-4 ring-primary/20 shadow-md">
+                    <Image src={profile.avatar} alt={profile.name} width={80} height={80} className="object-cover" />
+                  </div>
+                  <div className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-primary border-2 border-background flex items-center justify-center">
+                    <Camera className="w-3 h-3 text-primary-foreground" />
+                  </div>
+                </div>
+                <p className="mt-2 text-sm font-bold text-foreground">{profile.name}</p>
                 <p className="text-xs text-muted-foreground">@{profile.username}</p>
               </div>
-              <button
-                onClick={() => {
-                  setIsSettingsOpen(false)
-                  setIsEditProfileOpen(true)
-                }}
-                className="px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold"
-              >
-                Edit
-              </button>
-            </div>
-          </div>
 
-          {/* Settings Sections */}
-          <div className="px-4 space-y-6 pb-8">
-            {/* Account Section */}
-            <div className="space-y-2">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Account</h3>
-              <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
-                <button className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors border-b border-border/50">
-                  <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center">
-                    <User className="w-4 h-4 text-blue-500" />
+              <div className="px-4 space-y-5 pb-8">
+                <div className="space-y-2">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Profile</h3>
+                  <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
+                    <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border/50">
+                      <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
+                        <User className="w-4 h-4 text-blue-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-muted-foreground">Full Name</p>
+                        <p className="text-sm font-medium text-foreground">{profile.name}</p>
+                      </div>
+                      <button onClick={() => { setIsSettingsOpen(false); setSettingsScreen("main"); setIsEditProfileOpen(true) }}>
+                        <Edit3 className="w-4 h-4 text-muted-foreground" />
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border/50">
+                      <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
+                        <AtSign className="w-4 h-4 text-blue-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-muted-foreground">Username</p>
+                        <p className="text-sm font-medium text-foreground">@{profile.username}</p>
+                      </div>
+                      <button onClick={() => { setIsSettingsOpen(false); setSettingsScreen("main"); setIsEditProfileOpen(true) }}>
+                        <Edit3 className="w-4 h-4 text-muted-foreground" />
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-3 px-4 py-3.5">
+                      <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
+                        <MapPin className="w-4 h-4 text-blue-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-muted-foreground">Location</p>
+                        <p className="text-sm font-medium text-foreground">{profile.location}</p>
+                      </div>
+                      <button onClick={() => { setIsSettingsOpen(false); setSettingsScreen("main"); setIsEditProfileOpen(true) }}>
+                        <Edit3 className="w-4 h-4 text-muted-foreground" />
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex-1 text-left">
-                    <p className="text-sm font-medium text-foreground">Account Info</p>
-                    <p className="text-xs text-muted-foreground">Name, email, phone</p>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                </button>
-                <button className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors border-b border-border/50">
-                  <div className="w-9 h-9 rounded-full bg-green-50 flex items-center justify-center">
-                    <Shield className="w-4 h-4 text-green-500" />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <p className="text-sm font-medium text-foreground">Security</p>
-                    <p className="text-xs text-muted-foreground">Password, 2FA</p>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                </button>
-                <button className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors">
-                  <div className="w-9 h-9 rounded-full bg-purple-50 flex items-center justify-center">
-                    <Lock className="w-4 h-4 text-purple-500" />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <p className="text-sm font-medium text-foreground">Privacy</p>
-                    <p className="text-xs text-muted-foreground">Account visibility</p>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                </button>
-              </div>
-            </div>
-
-            {/* Preferences Section */}
-            <div className="space-y-2">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Preferences</h3>
-              <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
-                {/* Dark Mode Toggle */}
-                <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border/50">
-                  <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center">
-                    {settings.darkMode ? (
-                      <Moon className="w-4 h-4 text-slate-600" />
-                    ) : (
-                      <Sun className="w-4 h-4 text-orange-500" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-foreground">Dark Mode</p>
-                    <p className="text-xs text-muted-foreground">{settings.darkMode ? "On" : "Off"}</p>
-                  </div>
-                  <button
-                    onClick={() => setSettings(prev => ({ ...prev, darkMode: !prev.darkMode }))}
-                    className={cn(
-                      "w-11 h-6 rounded-full transition-colors relative",
-                      settings.darkMode ? "bg-primary" : "bg-muted"
-                    )}
-                  >
-                    <span className={cn(
-                      "absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform",
-                      settings.darkMode ? "translate-x-5.5 left-0.5" : "translate-x-0.5 left-0.5"
-                    )} />
-                  </button>
                 </div>
 
-                {/* Language */}
-                <button className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors border-b border-border/50">
-                  <div className="w-9 h-9 rounded-full bg-indigo-50 flex items-center justify-center">
-                    <Languages className="w-4 h-4 text-indigo-500" />
+                <div className="space-y-2">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Contact</h3>
+                  <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
+                    <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border/50">
+                      <div className="w-9 h-9 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0">
+                        <Mail className="w-4 h-4 text-green-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-muted-foreground">Email</p>
+                        <p className="text-sm font-medium text-foreground">{settings.email}</p>
+                      </div>
+                      <span className="text-[10px] font-semibold text-green-600 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full flex-shrink-0">Verified</span>
+                    </div>
+                    <div className="flex items-center gap-3 px-4 py-3.5">
+                      <div className="w-9 h-9 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0">
+                        <Smartphone className="w-4 h-4 text-green-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-muted-foreground">Phone</p>
+                        <p className="text-sm font-medium text-foreground">{settings.phone}</p>
+                      </div>
+                      <button><Edit3 className="w-4 h-4 text-muted-foreground" /></button>
+                    </div>
                   </div>
-                  <div className="flex-1 text-left">
-                    <p className="text-sm font-medium text-foreground">Language</p>
-                    <p className="text-xs text-muted-foreground">{settings.language}</p>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                </button>
-
-                {/* Notifications Toggle */}
-                <div className="flex items-center gap-3 px-4 py-3.5">
-                  <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center">
-                    <Bell className="w-4 h-4 text-red-500" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-foreground">Notifications</p>
-                    <p className="text-xs text-muted-foreground">{settings.notifications ? "Enabled" : "Disabled"}</p>
-                  </div>
-                  <button
-                    onClick={() => setSettings(prev => ({ ...prev, notifications: !prev.notifications }))}
-                    className={cn(
-                      "w-11 h-6 rounded-full transition-colors relative",
-                      settings.notifications ? "bg-primary" : "bg-muted"
-                    )}
-                  >
-                    <span className={cn(
-                      "absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform",
-                      settings.notifications ? "translate-x-5.5 left-0.5" : "translate-x-0.5 left-0.5"
-                    )} />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Privacy Section */}
-            <div className="space-y-2">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Privacy</h3>
-              <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
-                {/* Private Account */}
-                <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border/50">
-                  <div className="w-9 h-9 rounded-full bg-yellow-50 flex items-center justify-center">
-                    {settings.privateAccount ? (
-                      <Lock className="w-4 h-4 text-yellow-600" />
-                    ) : (
-                      <Eye className="w-4 h-4 text-yellow-500" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-foreground">Private Account</p>
-                    <p className="text-xs text-muted-foreground">{settings.privateAccount ? "Only followers can see" : "Everyone can see"}</p>
-                  </div>
-                  <button
-                    onClick={() => setSettings(prev => ({ ...prev, privateAccount: !prev.privateAccount }))}
-                    className={cn(
-                      "w-11 h-6 rounded-full transition-colors relative",
-                      settings.privateAccount ? "bg-primary" : "bg-muted"
-                    )}
-                  >
-                    <span className={cn(
-                      "absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform",
-                      settings.privateAccount ? "translate-x-5.5 left-0.5" : "translate-x-0.5 left-0.5"
-                    )} />
-                  </button>
                 </div>
 
-                {/* Show Activity */}
-                <div className="flex items-center gap-3 px-4 py-3.5">
-                  <div className="w-9 h-9 rounded-full bg-teal-50 flex items-center justify-center">
-                    <EyeOff className="w-4 h-4 text-teal-500" />
+                <div className="space-y-2">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Personal</h3>
+                  <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
+                    <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border/50">
+                      <div className="w-9 h-9 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0">
+                        <Calendar className="w-4 h-4 text-purple-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-muted-foreground">Date of Birth</p>
+                        <p className="text-sm font-medium text-foreground">{settings.dateOfBirth}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 px-4 py-3.5">
+                      <div className="w-9 h-9 rounded-full bg-purple-50 flex items-center justify-center flex-shrink-0">
+                        <User className="w-4 h-4 text-purple-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-muted-foreground">Gender</p>
+                        <p className="text-sm font-medium text-foreground">{settings.gender}</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-foreground">Activity Status</p>
-                    <p className="text-xs text-muted-foreground">{settings.showActivity ? "Visible" : "Hidden"}</p>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Account</h3>
+                  <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
+                    <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border/50">
+                      <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                        <Clock className="w-4 h-4 text-gray-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-muted-foreground">Member Since</p>
+                        <p className="text-sm font-medium text-foreground">March 2024</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 px-4 py-3.5">
+                      <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                        <BadgeCheck className="w-4 h-4 text-gray-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-muted-foreground">Account Status</p>
+                        <p className="text-sm font-medium text-foreground">Verified Creator</p>
+                      </div>
+                      <span className="text-[10px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full flex-shrink-0">Active</span>
+                    </div>
                   </div>
-                  <button
-                    onClick={() => setSettings(prev => ({ ...prev, showActivity: !prev.showActivity }))}
-                    className={cn(
-                      "w-11 h-6 rounded-full transition-colors relative",
-                      settings.showActivity ? "bg-primary" : "bg-muted"
-                    )}
-                  >
-                    <span className={cn(
-                      "absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform",
-                      settings.showActivity ? "translate-x-5.5 left-0.5" : "translate-x-0.5 left-0.5"
-                    )} />
-                  </button>
                 </div>
               </div>
             </div>
+          )}
 
-            {/* Support Section */}
-            <div className="space-y-2">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Support</h3>
-              <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
-                <button className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors border-b border-border/50">
-                  <div className="w-9 h-9 rounded-full bg-pink-50 flex items-center justify-center">
-                    <HelpCircle className="w-4 h-4 text-pink-500" />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <p className="text-sm font-medium text-foreground">Help Center</p>
-                    <p className="text-xs text-muted-foreground">FAQs and support</p>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          {/* ─── SECURITY SCREEN ─── */}
+          {settingsScreen === "security" && (
+            <div className="h-full overflow-y-auto">
+              <div className="sticky top-0 z-50 flex items-center justify-between px-4 py-3 bg-background/95 backdrop-blur-md border-b border-border/50">
+                <button onClick={() => setSettingsScreen("main")} className="flex items-center gap-1 p-2 rounded-full hover:bg-muted transition-colors">
+                  <ChevronLeft className="w-5 h-5 text-foreground" />
+                  <span className="text-sm font-medium text-foreground">Back</span>
                 </button>
-                <button className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors">
-                  <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center">
-                    <LogOut className="w-4 h-4 text-gray-500" />
+                <h2 className="font-semibold text-foreground">Security</h2>
+                <div className="w-16" />
+              </div>
+
+              <div className="px-4 pt-5 pb-8 space-y-5">
+                <div className="space-y-2">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Login & Password</h3>
+                  <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
+                    <button className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors border-b border-border/50">
+                      <div className="w-9 h-9 rounded-full bg-green-50 flex items-center justify-center">
+                        <KeyRound className="w-4 h-4 text-green-500" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="text-sm font-medium text-foreground">Change Password</p>
+                        <p className="text-xs text-muted-foreground">Last changed 3 months ago</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                    <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border/50">
+                      <div className={cn("w-9 h-9 rounded-full flex items-center justify-center transition-colors", settings.twoFactorAuth ? "bg-green-100" : "bg-gray-100")}>
+                        <Smartphone className={cn("w-4 h-4", settings.twoFactorAuth ? "text-green-500" : "text-gray-400")} />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-foreground">Two-Factor Auth (2FA)</p>
+                        <p className="text-xs text-muted-foreground">{settings.twoFactorAuth ? "Enabled — SMS verification active" : "Add an extra security layer"}</p>
+                      </div>
+                      <button
+                        onClick={() => setSettings(prev => ({ ...prev, twoFactorAuth: !prev.twoFactorAuth }))}
+                        className={cn("w-11 h-6 rounded-full transition-all duration-300 relative flex-shrink-0", settings.twoFactorAuth ? "bg-green-500" : "bg-muted")}
+                      >
+                        <span className={cn("absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-300", settings.twoFactorAuth ? "translate-x-5" : "translate-x-0")} />
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-3 px-4 py-3.5">
+                      <div className="w-9 h-9 rounded-full bg-orange-50 flex items-center justify-center">
+                        <Bell className="w-4 h-4 text-orange-500" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-foreground">Login Alerts</p>
+                        <p className="text-xs text-muted-foreground">{settings.loginAlerts ? "Notify when new device logs in" : "No alerts for new logins"}</p>
+                      </div>
+                      <button
+                        onClick={() => setSettings(prev => ({ ...prev, loginAlerts: !prev.loginAlerts }))}
+                        className={cn("w-11 h-6 rounded-full transition-all duration-300 relative flex-shrink-0", settings.loginAlerts ? "bg-primary" : "bg-muted")}
+                      >
+                        <span className={cn("absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-300", settings.loginAlerts ? "translate-x-5" : "translate-x-0")} />
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex-1 text-left">
-                    <p className="text-sm font-medium text-destructive">Log Out</p>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Connected Accounts</h3>
+                  <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
+                    <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border/50">
+                      <div className="w-9 h-9 rounded-full bg-white border border-border flex items-center justify-center text-base font-bold text-blue-500">G</div>
+                      <div className="flex-1 text-left">
+                        <p className="text-sm font-medium text-foreground">Google</p>
+                        <p className="text-xs text-muted-foreground">alex@gmail.com</p>
+                      </div>
+                      <span className="text-[10px] font-semibold text-green-600 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">Connected</span>
+                    </div>
+                    <div className="flex items-center gap-3 px-4 py-3.5">
+                      <div className="w-9 h-9 rounded-full bg-black flex items-center justify-center text-white text-base font-bold">A</div>
+                      <div className="flex-1 text-left">
+                        <p className="text-sm font-medium text-foreground">Apple</p>
+                        <p className="text-xs text-muted-foreground">Not connected</p>
+                      </div>
+                      <button className="text-[10px] font-semibold text-primary px-2.5 py-1 rounded-full border border-primary hover:bg-primary/5 transition-colors">Connect</button>
+                    </div>
                   </div>
-                </button>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Danger Zone</h3>
+                  <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
+                    <button className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors border-b border-border/50">
+                      <div className="w-9 h-9 rounded-full bg-orange-50 flex items-center justify-center">
+                        <UserX className="w-4 h-4 text-orange-500" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="text-sm font-medium text-foreground">Blocked Users</p>
+                        <p className="text-xs text-muted-foreground">Manage blocked accounts</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                    <button className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-red-50/50 transition-colors">
+                      <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center">
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="text-sm font-medium text-red-500">Deactivate Account</p>
+                        <p className="text-xs text-muted-foreground">Temporarily disable your account</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
+          )}
 
-            {/* App Info */}
-            <div className="text-center pt-4">
-              <p className="text-xs text-muted-foreground">Cookie App v1.0.0</p>
-              <p className="text-xs text-muted-foreground">© 2026 Cookie Inc.</p>
+          {/* ─── PRIVACY SCREEN ─── */}
+          {settingsScreen === "privacy" && (
+            <div className="h-full overflow-y-auto">
+              <div className="sticky top-0 z-50 flex items-center justify-between px-4 py-3 bg-background/95 backdrop-blur-md border-b border-border/50">
+                <button onClick={() => setSettingsScreen("main")} className="flex items-center gap-1 p-2 rounded-full hover:bg-muted transition-colors">
+                  <ChevronLeft className="w-5 h-5 text-foreground" />
+                  <span className="text-sm font-medium text-foreground">Back</span>
+                </button>
+                <h2 className="font-semibold text-foreground">Privacy</h2>
+                <div className="w-16" />
+              </div>
+
+              <div className="px-4 pt-5 pb-8 space-y-5">
+                <div className="space-y-2">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Account Privacy</h3>
+                  <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
+                    <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border/50">
+                      <div className={cn("w-9 h-9 rounded-full flex items-center justify-center transition-colors", settings.privateAccount ? "bg-yellow-100" : "bg-yellow-50")}>
+                        {settings.privateAccount ? <Lock className="w-4 h-4 text-yellow-600" /> : <Eye className="w-4 h-4 text-yellow-500" />}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-foreground">Private Account</p>
+                        <p className="text-xs text-muted-foreground">{settings.privateAccount ? "Only approved followers see your content" : "Anyone can see your content"}</p>
+                      </div>
+                      <button
+                        onClick={() => setSettings(prev => ({ ...prev, privateAccount: !prev.privateAccount }))}
+                        className={cn("w-11 h-6 rounded-full transition-all duration-300 relative flex-shrink-0", settings.privateAccount ? "bg-primary" : "bg-muted")}
+                      >
+                        <span className={cn("absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-300", settings.privateAccount ? "translate-x-5" : "translate-x-0")} />
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-3 px-4 py-3.5">
+                      <div className="w-9 h-9 rounded-full bg-teal-50 flex items-center justify-center">
+                        {settings.activeStatus ? <Activity className="w-4 h-4 text-teal-500" /> : <EyeOff className="w-4 h-4 text-teal-400" />}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-foreground">Active Status</p>
+                        <p className="text-xs text-muted-foreground">{settings.activeStatus ? "Others can see when you're active" : "Active status hidden from others"}</p>
+                      </div>
+                      <button
+                        onClick={() => setSettings(prev => ({ ...prev, activeStatus: !prev.activeStatus }))}
+                        className={cn("w-11 h-6 rounded-full transition-all duration-300 relative flex-shrink-0", settings.activeStatus ? "bg-primary" : "bg-muted")}
+                      >
+                        <span className={cn("absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-300", settings.activeStatus ? "translate-x-5" : "translate-x-0")} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Content & Interactions</h3>
+                  <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
+                    <button
+                      onClick={() => setSettings(prev => ({ ...prev, whoCanComment: prev.whoCanComment === "Everyone" ? "Following" : prev.whoCanComment === "Following" ? "Off" : "Everyone" }))}
+                      className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors border-b border-border/50"
+                    >
+                      <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center">
+                        <MessageCircle className="w-4 h-4 text-blue-500" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="text-sm font-medium text-foreground">Who can comment</p>
+                        <p className="text-xs text-muted-foreground">{settings.whoCanComment}</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                    <button
+                      onClick={() => setSettings(prev => ({ ...prev, whoCanDM: prev.whoCanDM === "Everyone" ? "Following" : "Everyone" }))}
+                      className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors border-b border-border/50"
+                    >
+                      <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center">
+                        <Mail className="w-4 h-4 text-blue-500" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="text-sm font-medium text-foreground">Who can message me</p>
+                        <p className="text-xs text-muted-foreground">{settings.whoCanDM}</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                    <button
+                      onClick={() => setSettings(prev => ({ ...prev, whoCanTag: prev.whoCanTag === "Everyone" ? "Following" : "Everyone" }))}
+                      className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center">
+                        <Tag className="w-4 h-4 text-blue-500" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="text-sm font-medium text-foreground">Who can tag me</p>
+                        <p className="text-xs text-muted-foreground">{settings.whoCanTag}</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Data & Privacy</h3>
+                  <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
+                    <button className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors border-b border-border/50">
+                      <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center">
+                        <Download className="w-4 h-4 text-gray-500" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="text-sm font-medium text-foreground">Download Your Data</p>
+                        <p className="text-xs text-muted-foreground">Export a copy of your data</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                    <button className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-red-50/50 transition-colors">
+                      <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center">
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="text-sm font-medium text-red-500">Delete Account</p>
+                        <p className="text-xs text-muted-foreground">Permanently remove your account</p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* ─── LANGUAGE SCREEN ─── */}
+          {settingsScreen === "language" && (
+            <div className="h-full overflow-y-auto">
+              <div className="sticky top-0 z-50 flex items-center justify-between px-4 py-3 bg-background/95 backdrop-blur-md border-b border-border/50">
+                <button onClick={() => setSettingsScreen("main")} className="flex items-center gap-1 p-2 rounded-full hover:bg-muted transition-colors">
+                  <ChevronLeft className="w-5 h-5 text-foreground" />
+                  <span className="text-sm font-medium text-foreground">Back</span>
+                </button>
+                <h2 className="font-semibold text-foreground">Language</h2>
+                <div className="w-16" />
+              </div>
+
+              <div className="px-4 pt-5 pb-8">
+                <p className="text-sm text-muted-foreground mb-4 px-1">Choose your preferred language for the app interface.</p>
+                <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
+                  {[
+                    { code: "English", label: "English", flag: "🇺🇸", sublabel: "English (US)" },
+                    { code: "Vietnamese", label: "Tiếng Việt", flag: "🇻🇳", sublabel: "Vietnamese" },
+                  ].map((lang, i, arr) => (
+                    <button
+                      key={lang.code}
+                      onClick={() => setSettings(prev => ({ ...prev, language: lang.code }))}
+                      className={cn(
+                        "w-full flex items-center gap-4 px-4 py-4 hover:bg-muted/50 transition-colors",
+                        i < arr.length - 1 && "border-b border-border/50"
+                      )}
+                    >
+                      <span className="text-2xl">{lang.flag}</span>
+                      <div className="flex-1 text-left">
+                        <p className="text-sm font-semibold text-foreground">{lang.label}</p>
+                        <p className="text-xs text-muted-foreground">{lang.sublabel}</p>
+                      </div>
+                      <div className={cn(
+                        "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
+                        settings.language === lang.code ? "border-primary bg-primary" : "border-border"
+                      )}>
+                        {settings.language === lang.code && <Check className="w-3 h-3 text-primary-foreground" />}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ─── NOTIFICATIONS SCREEN ─── */}
+          {settingsScreen === "notifications" && (
+            <div className="h-full overflow-y-auto">
+              <div className="sticky top-0 z-50 flex items-center justify-between px-4 py-3 bg-background/95 backdrop-blur-md border-b border-border/50">
+                <button onClick={() => setSettingsScreen("main")} className="flex items-center gap-1 p-2 rounded-full hover:bg-muted transition-colors">
+                  <ChevronLeft className="w-5 h-5 text-foreground" />
+                  <span className="text-sm font-medium text-foreground">Back</span>
+                </button>
+                <h2 className="font-semibold text-foreground">Notifications</h2>
+                <div className="w-16" />
+              </div>
+
+              <div className="px-4 pt-5 pb-8 space-y-5">
+                <div className="space-y-2">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Push Notifications</h3>
+                  <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
+                    <div className="flex items-center gap-3 px-4 py-3.5">
+                      <div className={cn("w-9 h-9 rounded-full flex items-center justify-center transition-colors", settings.notifications ? "bg-red-100" : "bg-gray-100")}>
+                        <Bell className={cn("w-4 h-4 transition-colors", settings.notifications ? "text-red-500" : "text-gray-400")} />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-foreground">Allow Notifications</p>
+                        <p className="text-xs text-muted-foreground">{settings.notifications ? "Receiving push notifications" : "All notifications paused"}</p>
+                      </div>
+                      <button
+                        onClick={() => setSettings(prev => ({ ...prev, notifications: !prev.notifications }))}
+                        className={cn("w-11 h-6 rounded-full transition-all duration-300 relative flex-shrink-0", settings.notifications ? "bg-primary" : "bg-muted")}
+                      >
+                        <span className={cn("absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-300", settings.notifications ? "translate-x-5" : "translate-x-0")} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {settings.notifications && (
+                  <div className="space-y-2">
+                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Notify Me About</h3>
+                    <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
+                      {([
+                        { key: "likeNotifications" as const, label: "Likes", desc: "When someone likes your post", emoji: "❤️" },
+                        { key: "commentNotifications" as const, label: "Comments", desc: "When someone comments on your post", emoji: "💬" },
+                        { key: "followNotifications" as const, label: "New Followers", desc: "When someone follows you", emoji: "👤" },
+                        { key: "messageNotifications" as const, label: "Messages", desc: "When you receive a message", emoji: "✉️" },
+                        { key: "mentionNotifications" as const, label: "Mentions", desc: "When someone mentions @you", emoji: "🔔" },
+                      ]).map((item, i, arr) => (
+                        <div key={item.key} className={cn("flex items-center gap-3 px-4 py-3.5", i < arr.length - 1 && "border-b border-border/50")}>
+                          <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                            <span className="text-base">{item.emoji}</span>
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-foreground">{item.label}</p>
+                            <p className="text-xs text-muted-foreground">{item.desc}</p>
+                          </div>
+                          <button
+                            onClick={() => setSettings(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+                            className={cn("w-11 h-6 rounded-full transition-all duration-300 relative flex-shrink-0", settings[item.key] ? "bg-primary" : "bg-muted")}
+                          >
+                            <span className={cn("absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-300", settings[item.key] ? "translate-x-5" : "translate-x-0")} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Email</h3>
+                  <div className="bg-card rounded-2xl border border-border/50 overflow-hidden">
+                    <div className="flex items-center gap-3 px-4 py-3.5">
+                      <div className="w-9 h-9 rounded-full bg-indigo-50 flex items-center justify-center">
+                        <Mail className="w-4 h-4 text-indigo-500" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-foreground">Email Notifications</p>
+                        <p className="text-xs text-muted-foreground">{settings.emailNotifications ? `Sending to ${settings.email}` : "Email notifications off"}</p>
+                      </div>
+                      <button
+                        onClick={() => setSettings(prev => ({ ...prev, emailNotifications: !prev.emailNotifications }))}
+                        className={cn("w-11 h-6 rounded-full transition-all duration-300 relative flex-shrink-0", settings.emailNotifications ? "bg-primary" : "bg-muted")}
+                      >
+                        <span className={cn("absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-300", settings.emailNotifications ? "translate-x-5" : "translate-x-0")} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
         </div>
       )}
     </div>
