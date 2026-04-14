@@ -10,6 +10,8 @@ import { ReviewsFeed } from "@/components/cookie/reviews-feed"
 import { Messages } from "@/components/cookie/messages"
 import { Profile } from "@/components/cookie/profile"
 import { Notifications } from "@/components/cookie/notifications"
+import { SplashScreen } from "@/components/cookie/splash-screen"
+import { LoginScreen } from "@/components/cookie/login-screen"
 
 type Tab = "Explore" | "Reviews"
 
@@ -20,6 +22,35 @@ export default function CookieApp() {
   const [isMessagesOpen, setIsMessagesOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
+  const [showSplash, setShowSplash] = useState(true)
+  const [showLogin, setShowLogin] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+
+  const handleSplashComplete = () => {
+    setShowSplash(false)
+    // Show login screen after splash
+    setShowLogin(true)
+  }
+
+  const handleLogin = (method: "google" | "apple" | "phone") => {
+    console.log(`[Auth] Logging in with ${method}`)
+    // TODO: Implement Supabase auth here
+    setIsAuthenticated(true)
+    setShowLogin(false)
+  }
+
+  const handleSkipLogin = () => {
+    console.log("[Auth] Skipping login, exploring as guest")
+    setShowLogin(false)
+  }
+
+  if (showSplash) {
+    return <SplashScreen onComplete={handleSplashComplete} />
+  }
+
+  if (showLogin) {
+    return <LoginScreen onLogin={handleLogin} onSkip={handleSkipLogin} />
+  }
 
   return (
     <div className="min-h-screen bg-background w-full max-w-md mx-auto relative">
