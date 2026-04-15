@@ -12,8 +12,7 @@ import { Profile } from "@/components/cookie/profile"
 import { Notifications } from "@/components/cookie/notifications"
 import { SplashScreen } from "@/components/cookie/splash-screen"
 import { LoginScreen } from "@/components/cookie/login-screen"
-import { createBrowserClient } from "@/lib/supabase"
-import { User } from "@supabase/supabase-js"
+import { useAuth } from "@/components/auth-provider"
 
 type Tab = "Explore" | "Reviews"
 
@@ -25,84 +24,39 @@ export default function CookieApp() {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
   const [showSplash, setShowSplash] = useState(true)
-  const [showLogin, setShowLogin] = useState(false)
-  const [user, setUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [supabase, setSupabase] = useState<ReturnType<typeof createBrowserClient> | null>(null)
-
-  // Initialize Supabase client on mount
-  useEffect(() => {
-    try {
-      const client = createBrowserClient()
-      setSupabase(client)
-    } catch (error) {
-      console.warn('Supabase client not initialized:', error)
-      setIsLoading(false)
-    }
-  }, [])
-
-  // Check auth state when client is ready
-  useEffect(() => {
-    if (!supabase) return
-    
-    const checkAuth = async () => {
-      let session = null
-      try {
-        const { data } = await supabase.auth.getSession()
-        session = data.session
-        setUser(session?.user ?? null)
-      } catch (error) {
-        console.warn('Auth check failed:', error)
-      }
-      setIsLoading(false)
-      
-      // After splash, show login if not authenticated
-      if (!session?.user) {
-        setShowLogin(true)
-      }
-    }
-
-    checkAuth()
-
-    // Subscribe to auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user ?? null)
-        if (session?.user) {
-          setShowLogin(false)
-        }
-      }
-    )
-
-    return () => subscription.unsubscribe()
-  }, [supabase])
+  const [isGuest, setIsGuest] = useState(false)
+  
+  const { user, isLoading, signOut } = useAuth()
 
   const handleSplashComplete = () => {
     setShowSplash(false)
   }
 
-  const handleLogin = (method: "google" | "apple" | "phone") => {
-    console.log(`[Auth] Successfully logged in with ${method}`)
-    // Auth state is handled by onAuthStateChange listener
+  const handleLogin = (method: string) => {
+    console.log(`[Auth] Logged in with ${method}`)
+    setIsGuest(false)
   }
 
   const handleSkipLogin = () => {
     console.log("[Auth] Skipping login, exploring as guest")
-    setShowLogin(false)
+    setIsGuest(true)
   }
 
   const handleLogout = async () => {
-    if (supabase) {
-      await supabase.auth.signOut()
-    }
-    setShowLogin(true)
+    await signOut()
+    setIsGuest(false)
   }
 
   if (showSplash) {
     return <SplashScreen onComplete={handleSplashComplete} />
   }
 
-  if (showLogin) {
+  if (isLoading) {
+    // Show nothing or a small spinner while auth finishes
+    return <div className="min-h-screen bg-white" /> 
+  }
+
+  if (!user && !isGuest) {
     return <LoginScreen onLogin={handleLogin} onSkip={handleSkipLogin} />
   }
 

@@ -13,6 +13,10 @@ interface LoginScreenProps {
 
 export function LoginScreen({ onLogin, onSkip }: LoginScreenProps) {
   const [isLoading, setIsLoading] = useState<string | null>(null)
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [showEmailInput, setShowEmailInput] = useState(false)
+  const [isSignUp, setIsSignUp] = useState(false)
   const [showPhoneInput, setShowPhoneInput] = useState(false)
   const [phoneNumber, setPhoneNumber] = useState("")
   const [otpCode, setOtpCode] = useState("")
@@ -39,9 +43,55 @@ export function LoginScreen({ onLogin, onSkip }: LoginScreenProps) {
     // onLogin callback is handled by callback route
   }
 
+  const handleEmailLogin = async () => {
+    if (!showEmailInput) {
+      setShowEmailInput(true)
+      setShowPhoneInput(false)
+      return
+    }
+
+    if (!email || !password) {
+      setError("Please enter both email and password")
+      return
+    }
+
+    setIsLoading("email")
+    setError(null)
+
+    if (isSignUp) {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            username: email.split('@')[0],
+            full_name: email.split('@')[0],
+          }
+        }
+      })
+      if (error) {
+        setError(error.message)
+        setIsLoading(null)
+      } else {
+        setError("Success! Check your email or try logging in if confirmations are disabled.")
+        setIsLoading(null)
+      }
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+      if (error) {
+        setError(error.message)
+        setIsLoading(null)
+      }
+    }
+  }
+
   const handlePhoneLogin = async () => {
     if (!showPhoneInput) {
       setShowPhoneInput(true)
+      setShowEmailInput(false)
       return
     }
 
@@ -101,24 +151,28 @@ export function LoginScreen({ onLogin, onSkip }: LoginScreenProps) {
       onClick: () => handleOAuthLogin("google")
     },
     {
-      id: "apple" as const,
-      label: "Continue with Apple",
-      icon: Apple,
+      id: "phone" as const,
+      label: showPhoneInput ? "Send OTP" : "Continue with Phone",
+      icon: Phone,
       bgColor: "bg-black",
       textColor: "text-white",
       border: "border border-black",
       shadow: "",
-      onClick: () => handleOAuthLogin("apple")
+      onClick: () => {
+        setShowPhoneInput(true)
+        setShowEmailInput(false)
+        handlePhoneLogin()
+      }
     },
     {
-      id: "phone" as const,
-      label: showPhoneInput ? "Send OTP" : "Continue with Phone",
-      icon: Phone,
+      id: "email" as const,
+      label: showEmailInput ? (isSignUp ? "Sign Up" : "Sign In") : "Continue with Email",
+      icon: ArrowRight,
       bgColor: "bg-[#FFEE00]",
       textColor: "text-black",
       border: "",
       shadow: "shadow-sm",
-      onClick: handlePhoneLogin
+      onClick: handleEmailLogin
     }
   ]
 
@@ -212,6 +266,39 @@ export function LoginScreen({ onLogin, onSkip }: LoginScreenProps) {
               )}
             </motion.button>
           ))}
+
+          {/* Email Input */}
+          {showEmailInput && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              className="space-y-3"
+            >
+              <input
+                type="email"
+                placeholder="Email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-3 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#FFEE00] text-sm"
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#FFEE00] text-sm"
+              />
+              <div className="flex justify-center items-center gap-2 text-xs text-gray-500">
+                <span>{isSignUp ? "Already have an account?" : "Don't have an account?"}</span>
+                <button 
+                  onClick={() => setIsSignUp(!isSignUp)}
+                  className="text-black font-bold underline"
+                >
+                  {isSignUp ? "Sign In" : "Sign Up"}
+                </button>
+              </div>
+            </motion.div>
+          )}
 
           {/* Phone Input */}
           {showPhoneInput && !showOtpInput && (
