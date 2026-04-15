@@ -28,14 +28,32 @@ export default function CookieApp() {
   const [showLogin, setShowLogin] = useState(false)
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [supabase, setSupabase] = useState<ReturnType<typeof createBrowserClient> | null>(null)
 
-  const supabase = createBrowserClient()
-
-  // Check auth state on mount
+  // Initialize Supabase client on mount
   useEffect(() => {
+    try {
+      const client = createBrowserClient()
+      setSupabase(client)
+    } catch (error) {
+      console.warn('Supabase client not initialized:', error)
+      setIsLoading(false)
+    }
+  }, [])
+
+  // Check auth state when client is ready
+  useEffect(() => {
+    if (!supabase) return
+    
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setUser(session?.user ?? null)
+      let session = null
+      try {
+        const { data } = await supabase.auth.getSession()
+        session = data.session
+        setUser(session?.user ?? null)
+      } catch (error) {
+        console.warn('Auth check failed:', error)
+      }
       setIsLoading(false)
       
       // After splash, show login if not authenticated
@@ -57,7 +75,7 @@ export default function CookieApp() {
     )
 
     return () => subscription.unsubscribe()
-  }, [])
+  }, [supabase])
 
   const handleSplashComplete = () => {
     setShowSplash(false)
@@ -74,7 +92,9 @@ export default function CookieApp() {
   }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    if (supabase) {
+      await supabase.auth.signOut()
+    }
     setShowLogin(true)
   }
 
