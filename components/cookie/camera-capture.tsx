@@ -34,7 +34,7 @@ export function CameraCapture({ isOpen, onClose }: CameraCaptureProps) {
   const startCamera = useCallback(async () => {
     try {
       setCameraError(null)
-      
+
       if (stream) {
         stream.getTracks().forEach(track => track.stop())
       }
@@ -49,7 +49,7 @@ export function CameraCapture({ isOpen, onClose }: CameraCaptureProps) {
       })
 
       setStream(mediaStream)
-      
+
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream
       }
@@ -74,7 +74,7 @@ export function CameraCapture({ isOpen, onClose }: CameraCaptureProps) {
       setCapturedImage(null)
       setSelectedFriends([])
     }
-    
+
     return () => {
       stopCamera()
     }
@@ -94,7 +94,7 @@ export function CameraCapture({ isOpen, onClose }: CameraCaptureProps) {
     if (!videoRef.current || !canvasRef.current) return
 
     setIsCapturing(true)
-    
+
     const video = videoRef.current
     const canvas = canvasRef.current
     const context = canvas.getContext("2d")
@@ -108,7 +108,7 @@ export function CameraCapture({ isOpen, onClose }: CameraCaptureProps) {
     const imageDataUrl = canvas.toDataURL("image/jpeg", 0.9)
     setCapturedImage(imageDataUrl)
     stopCamera()
-    
+
     setTimeout(() => setIsCapturing(false), 300)
   }, [stopCamera])
 
@@ -119,8 +119,8 @@ export function CameraCapture({ isOpen, onClose }: CameraCaptureProps) {
   }
 
   const toggleFriend = (friendId: string) => {
-    setSelectedFriends(prev => 
-      prev.includes(friendId) 
+    setSelectedFriends(prev =>
+      prev.includes(friendId)
         ? prev.filter(id => id !== friendId)
         : [...prev, friendId]
     )
@@ -158,7 +158,7 @@ export function CameraCapture({ isOpen, onClose }: CameraCaptureProps) {
   return (
     <div className="fixed inset-0 z-[100] bg-black">
       <div className="relative w-full h-full max-w-md mx-auto flex flex-col">
-        
+
         {/* Locket-style Header - Minimal */}
         <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-4 pt-4 pb-2">
           <button
@@ -167,7 +167,7 @@ export function CameraCapture({ isOpen, onClose }: CameraCaptureProps) {
           >
             <X className="w-5 h-5 text-white" />
           </button>
-          
+
           {!capturedImage && (
             <div className="flex items-center gap-2">
               <button
@@ -190,7 +190,7 @@ export function CameraCapture({ isOpen, onClose }: CameraCaptureProps) {
         {/* Main Camera/Image Area - Locket Style */}
         <div className="flex-1 flex items-center justify-center px-3 pt-16 pb-4">
           <div className="relative w-full aspect-[3/4] max-h-[65vh] rounded-[40px] overflow-hidden bg-neutral-900">
-            
+
             {cameraError ? (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center px-8">
@@ -213,7 +213,7 @@ export function CameraCapture({ isOpen, onClose }: CameraCaptureProps) {
                   alt="Captured"
                   className="w-full h-full object-cover"
                 />
-                
+
                 {/* Sent reaction animation */}
                 {showReaction && (
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center animate-in fade-in duration-300">
@@ -235,7 +235,7 @@ export function CameraCapture({ isOpen, onClose }: CameraCaptureProps) {
                   muted
                   className="absolute inset-0 w-full h-full object-cover"
                 />
-                
+
                 {/* Capture flash effect */}
                 {isCapturing && (
                   <div className="absolute inset-0 bg-white animate-pulse" />
@@ -256,14 +256,14 @@ export function CameraCapture({ isOpen, onClose }: CameraCaptureProps) {
               <div className="mb-5">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-white/60 text-sm">Send to</span>
-                  <button 
+                  <button
                     onClick={selectAllFriends}
                     className="text-primary text-sm font-medium"
                   >
                     {selectedFriends.length === friends.length ? "Deselect All" : "Select All"}
                   </button>
                 </div>
-                
+
                 <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide">
                   {/* All Friends Button */}
                   <button
@@ -274,8 +274,8 @@ export function CameraCapture({ isOpen, onClose }: CameraCaptureProps) {
                   >
                     <div className={cn(
                       "w-14 h-14 rounded-full flex items-center justify-center transition-all",
-                      selectedFriends.length === friends.length 
-                        ? "bg-primary ring-2 ring-primary ring-offset-2 ring-offset-black" 
+                      selectedFriends.length === friends.length
+                        ? "bg-primary ring-2 ring-primary ring-offset-2 ring-offset-black"
                         : "bg-white/10"
                     )}>
                       <Users className={cn(
@@ -285,7 +285,7 @@ export function CameraCapture({ isOpen, onClose }: CameraCaptureProps) {
                     </div>
                     <span className="text-white/70 text-[10px]">All</span>
                   </button>
-                  
+
                   {/* Individual Friends */}
                   {friends.map((friend) => (
                     <button
@@ -318,7 +318,7 @@ export function CameraCapture({ isOpen, onClose }: CameraCaptureProps) {
                   ))}
                 </div>
               </div>
-              
+
               {/* Action Buttons */}
               <div className="flex items-center justify-center gap-6">
                 <button
@@ -327,14 +327,14 @@ export function CameraCapture({ isOpen, onClose }: CameraCaptureProps) {
                 >
                   <RotateCcw className="w-6 h-6 text-white" />
                 </button>
-                
+
                 <button
                   onClick={sendPhoto}
                   disabled={selectedFriends.length === 0}
                   className={cn(
                     "w-16 h-16 rounded-full flex items-center justify-center active:scale-95 transition-all",
-                    selectedFriends.length > 0 
-                      ? "bg-primary shadow-lg shadow-primary/40" 
+                    selectedFriends.length > 0
+                      ? "bg-primary shadow-lg shadow-primary/40"
                       : "bg-white/20"
                   )}
                 >
@@ -356,7 +356,7 @@ export function CameraCapture({ isOpen, onClose }: CameraCaptureProps) {
                 >
                   <SwitchCamera className="w-5 h-5 text-white" />
                 </button>
-                
+
                 {/* Capture Button - Center - Locket Style */}
                 <button
                   onClick={capturePhoto}
@@ -374,11 +374,11 @@ export function CameraCapture({ isOpen, onClose }: CameraCaptureProps) {
                   {/* Inner white button */}
                   <div className="absolute inset-[6px] rounded-full bg-white" />
                 </button>
-                
+
                 {/* Placeholder for symmetry - Right */}
                 <div className="w-12 h-12" />
               </div>
-              
+
               {/* Hint text */}
               <p className="text-center text-white/40 text-xs mt-5">
                 Share your food moment

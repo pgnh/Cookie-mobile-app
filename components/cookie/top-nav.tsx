@@ -27,11 +27,11 @@ export function TopNav({ activeTab, onTabChange, onNotificationsClick }: TopNavP
             </div>
             <span className="font-bold text-base sm:text-lg text-foreground hidden xs:inline">Cookie</span>
           </div>
-          
+
           <div className={cn(
             "flex-1 min-w-0 flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full transition-all duration-200",
-            searchFocused 
-              ? "bg-white ring-2 ring-primary shadow-sm" 
+            searchFocused
+              ? "bg-white ring-2 ring-primary shadow-sm"
               : "bg-muted"
           )}>
             <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
@@ -43,7 +43,7 @@ export function TopNav({ activeTab, onTabChange, onNotificationsClick }: TopNavP
               onBlur={() => setSearchFocused(false)}
             />
           </div>
-          
+
           <button
             onClick={onNotificationsClick}
             className="relative p-1.5 sm:p-2 hover:bg-muted rounded-full transition-colors flex-shrink-0"

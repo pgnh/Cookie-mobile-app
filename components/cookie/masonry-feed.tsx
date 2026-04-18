@@ -332,7 +332,7 @@ export function MasonryFeed() {
               className="object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-            
+
             {/* Category Badge */}
             <div className="absolute top-4 left-4">
               <span className="px-3 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-semibold text-foreground">

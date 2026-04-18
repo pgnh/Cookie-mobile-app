@@ -14,6 +14,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- ────────────────────────────────────────────────────────────────────────────
 CREATE TYPE recipe_difficulty AS ENUM ('easy', 'medium', 'hard');
 CREATE TYPE swipe_action      AS ENUM ('liked', 'passed');
+CREATE TYPE notification_type AS ENUM ('like', 'comment', 'follow', 'mention', 'recipe_share');
 
 -- ────────────────────────────────────────────────────────────────────────────
 -- 2. USERS (public profile — extends auth.users)
@@ -26,6 +27,7 @@ CREATE TABLE public.users (
   bio              TEXT DEFAULT '',
   followers_count  INTEGER NOT NULL DEFAULT 0,
   following_count  INTEGER NOT NULL DEFAULT 0,
+  last_seen_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -52,6 +54,9 @@ CREATE TABLE public.recipes (
   instructions       JSONB NOT NULL DEFAULT '[]'::jsonb,
   likes_count        INTEGER NOT NULL DEFAULT 0,
   comments_count     INTEGER NOT NULL DEFAULT 0,
+  average_rating     REAL NOT NULL DEFAULT 0,
+  ratings_count      INTEGER NOT NULL DEFAULT 0,
+  fts_doc            tsvector,
   created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at         TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -125,10 +130,13 @@ CREATE TABLE public.messages (
   id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   sender_id   UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   receiver_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-  content     TEXT NOT NULL CHECK (char_length(content) > 0),
+  content     TEXT,
+  media_url   TEXT,
+  metadata    JSONB,
   is_read     BOOLEAN NOT NULL DEFAULT false,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CHECK (sender_id <> receiver_id)
+  CHECK (sender_id <> receiver_id),
+  CHECK (content IS NOT NULL OR media_url IS NOT NULL OR metadata IS NOT NULL)
 );
 
 CREATE INDEX idx_messages_conversation ON public.messages (
@@ -395,6 +403,205 @@ CREATE POLICY "Recipes: authors can update images"
 CREATE POLICY "Recipes: authors can delete images"
   ON storage.objects FOR DELETE
   USING (bucket_id = 'recipes' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- 11. REVIEWS & REPOSTS
+-- ════════════════════════════════════════════════════════════════════════════
+
+CREATE TABLE public.reviews (
+  id             UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  author_id      UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  recipe_id      UUID REFERENCES public.recipes(id) ON DELETE SET NULL,
+  dish_name      TEXT NOT NULL,
+  restaurant     TEXT,
+  location       TEXT,
+  rating         INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  content        TEXT NOT NULL,
+  images         TEXT[] DEFAULT '{}',
+  likes_count    INTEGER NOT NULL DEFAULT 0,
+  comments_count INTEGER NOT NULL DEFAULT 0,
+  reposts_count  INTEGER NOT NULL DEFAULT 0,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.reposts (
+  id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id     UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  target_type TEXT NOT NULL CHECK (target_type IN ('recipe', 'review')),
+  target_id   UUID NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.review_likes (
+  user_id    UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  review_id  UUID NOT NULL REFERENCES public.reviews(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, review_id)
+);
+
+CREATE OR REPLACE FUNCTION public.update_recipe_rating()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN
+    IF NEW.recipe_id IS NOT NULL THEN
+      WITH stats AS (
+        SELECT COALESCE(AVG(rating), 0) AS avg_rating, COUNT(*) AS cnt
+        FROM public.reviews WHERE recipe_id = NEW.recipe_id
+      )
+      UPDATE public.recipes SET average_rating = stats.avg_rating, ratings_count = stats.cnt WHERE id = NEW.recipe_id;
+    END IF;
+  END IF;
+  IF TG_OP = 'DELETE' THEN
+    IF OLD.recipe_id IS NOT NULL THEN
+      WITH stats AS (
+        SELECT COALESCE(AVG(rating), 0) AS avg_rating, COUNT(*) AS cnt
+        FROM public.reviews WHERE recipe_id = OLD.recipe_id
+      )
+      UPDATE public.recipes SET average_rating = stats.avg_rating, ratings_count = stats.cnt WHERE id = OLD.recipe_id;
+    END IF;
+  END IF;
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER trg_update_recipe_rating
+  AFTER INSERT OR UPDATE OR DELETE ON public.reviews
+  FOR EACH ROW EXECUTE FUNCTION public.update_recipe_rating();
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- 12. NOTIFICATIONS
+-- ════════════════════════════════════════════════════════════════════════════
+
+CREATE TABLE public.notifications (
+  id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id      UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  actor_id     UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  type         notification_type NOT NULL,
+  content      TEXT,
+  target_id    UUID,
+  is_read      BOOLEAN NOT NULL DEFAULT false,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_notifications_user ON public.notifications (user_id, created_at DESC);
+CREATE INDEX idx_notifications_read ON public.notifications (user_id, is_read) WHERE is_read = false;
+
+CREATE OR REPLACE FUNCTION public.create_notification()
+RETURNS TRIGGER AS $$
+DECLARE
+  v_receiver_id UUID;
+BEGIN
+  IF TG_TABLE_NAME = 'saves_swipes' AND NEW.action = 'liked' THEN
+    SELECT author_id INTO v_receiver_id FROM public.recipes WHERE id = NEW.recipe_id;
+    IF v_receiver_id != NEW.user_id THEN
+      INSERT INTO public.notifications (user_id, actor_id, type, target_id)
+      VALUES (v_receiver_id, NEW.user_id, 'like', NEW.recipe_id);
+    END IF;
+  ELSIF TG_TABLE_NAME = 'comments' THEN
+    SELECT author_id INTO v_receiver_id FROM public.recipes WHERE id = NEW.recipe_id;
+    IF v_receiver_id != NEW.user_id THEN
+      INSERT INTO public.notifications (user_id, actor_id, type, target_id, content)
+      VALUES (v_receiver_id, NEW.user_id, 'comment', NEW.recipe_id, left(NEW.content, 50));
+    END IF;
+  ELSIF TG_TABLE_NAME = 'follows' THEN
+    v_receiver_id := NEW.following_id;
+    IF v_receiver_id != NEW.follower_id THEN
+      INSERT INTO public.notifications (user_id, actor_id, type)
+      VALUES (v_receiver_id, NEW.follower_id, 'follow');
+    END IF;
+  END IF;
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER trg_notify_like AFTER INSERT OR UPDATE ON public.saves_swipes FOR EACH ROW EXECUTE FUNCTION public.create_notification();
+CREATE TRIGGER trg_notify_comment AFTER INSERT ON public.comments FOR EACH ROW EXECUTE FUNCTION public.create_notification();
+CREATE TRIGGER trg_notify_follow AFTER INSERT ON public.follows FOR EACH ROW EXECUTE FUNCTION public.create_notification();
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- 13. ADDITIONAL RLS POLICIES
+-- ════════════════════════════════════════════════════════════════════════════
+
+ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Reviews: anyone can view" ON public.reviews FOR SELECT USING (true);
+CREATE POLICY "Reviews: auth can create" ON public.reviews FOR INSERT WITH CHECK (auth.uid() = author_id);
+CREATE POLICY "Reviews: author can update" ON public.reviews FOR UPDATE USING (auth.uid() = author_id) WITH CHECK (auth.uid() = author_id);
+CREATE POLICY "Reviews: author can delete" ON public.reviews FOR DELETE USING (auth.uid() = author_id);
+
+ALTER TABLE public.reposts ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Reposts: anyone can view" ON public.reposts FOR SELECT USING (true);
+CREATE POLICY "Reposts: auth can create" ON public.reposts FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Reposts: user can delete own" ON public.reposts FOR DELETE USING (auth.uid() = user_id);
+
+ALTER TABLE public.review_likes ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Review Likes: anyone can view" ON public.review_likes FOR SELECT USING (true);
+CREATE POLICY "Review Likes: auth can create" ON public.review_likes FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Review Likes: user can delete own" ON public.review_likes FOR DELETE USING (auth.uid() = user_id);
+
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Notifications: users can view own" ON public.notifications FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Notifications: users can update own" ON public.notifications FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Notifications: users can delete own" ON public.notifications FOR DELETE USING (auth.uid() = user_id);
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- 14. FUNCTIONS (Search & Feed)
+-- ════════════════════════════════════════════════════════════════════════════
+
+CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+
+CREATE OR REPLACE FUNCTION public.global_search(search_query TEXT)
+RETURNS TABLE (
+  id          UUID,
+  type        TEXT,
+  title       TEXT,
+  subtitle    TEXT,
+  image_url   TEXT,
+  rank        REAL
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT r.id, 'recipe'::TEXT, r.title, COALESCE(r.description, ''), r.image_url, 
+         ts_rank(r.fts_doc, plainto_tsquery('simple', search_query)) as rank
+  FROM public.recipes r
+  WHERE r.fts_doc @@ plainto_tsquery('simple', search_query) OR r.title ILIKE '%' || search_query || '%'
+  UNION ALL
+  SELECT u.id, 'user'::TEXT, u.full_name as title, '@' || u.username as subtitle, u.avatar_url as image_url,
+         similarity(u.username, search_query) as rank
+  FROM public.users u
+  WHERE u.username % search_query OR u.full_name % search_query OR u.username ILIKE '%' || search_query || '%'
+  ORDER BY rank DESC;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION public.get_following_feed(p_user_id UUID, p_limit INT DEFAULT 20, p_offset INT DEFAULT 0)
+RETURNS TABLE (
+  item_id UUID,
+  item_type TEXT,
+  created_at TIMESTAMPTZ,
+  data JSONB
+) AS $$
+BEGIN
+  RETURN QUERY
+  WITH following AS (
+    SELECT following_id FROM public.follows WHERE follower_id = p_user_id
+    UNION SELECT p_user_id
+  )
+  SELECT r.id, 'recipe'::TEXT, r.created_at, to_jsonb(r.*)
+  FROM public.recipes r
+  WHERE r.author_id IN (SELECT following_id FROM following)
+  UNION ALL
+  SELECT rev.id, 'review'::TEXT, rev.created_at, to_jsonb(rev.*)
+  FROM public.reviews rev
+  WHERE rev.author_id IN (SELECT following_id FROM following)
+  UNION ALL
+  SELECT rep.id, 'repost'::TEXT, rep.created_at, to_jsonb(rep.*)
+  FROM public.reposts rep
+  WHERE rep.user_id IN (SELECT following_id FROM following)
+  ORDER BY created_at DESC
+  LIMIT p_limit OFFSET p_offset;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- DONE ✓
