@@ -22,10 +22,16 @@ export function LoginScreen({ onLogin, onSkip }: LoginScreenProps) {
   const [otpCode, setOtpCode] = useState("")
   const [showOtpInput, setShowOtpInput] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [supabase, setSupabase] = useState<ReturnType<typeof createBrowserClient> | null>(null)
 
-  const supabase = createBrowserClient()
+  useEffect(() => {
+    // Initialize Supabase client only on client side
+    const client = createBrowserClient()
+    setSupabase(client)
+  }, [])
 
   const handleOAuthLogin = async (provider: "google" | "apple") => {
+    if (!supabase) return
     setIsLoading(provider)
     setError(null)
     
@@ -44,6 +50,7 @@ export function LoginScreen({ onLogin, onSkip }: LoginScreenProps) {
   }
 
   const handleEmailLogin = async () => {
+    if (!supabase) return
     if (!showEmailInput) {
       setShowEmailInput(true)
       setShowPhoneInput(false)
@@ -89,6 +96,7 @@ export function LoginScreen({ onLogin, onSkip }: LoginScreenProps) {
   }
 
   const handlePhoneLogin = async () => {
+    if (!supabase) return
     if (!showPhoneInput) {
       setShowPhoneInput(true)
       setShowEmailInput(false)
@@ -117,6 +125,7 @@ export function LoginScreen({ onLogin, onSkip }: LoginScreenProps) {
   }
 
   const verifyOtp = async () => {
+    if (!supabase) return
     if (!otpCode) {
       setError("Please enter the OTP code")
       return

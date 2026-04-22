@@ -174,16 +174,21 @@ export function Messages({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
   const [inputText, setInputText] = useState("")
   const [currentMessages, setCurrentMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(true)
+  const [supabase, setSupabase] = useState<ReturnType<typeof createBrowserClient> | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   
-  const supabase = createBrowserClient()
+  useEffect(() => {
+    // Initialize Supabase client only on client side
+    const client = createBrowserClient()
+    setSupabase(client)
+  }, [])
 
   useEffect(() => {
-    if (isOpen) fetchConversations()
-  }, [isOpen])
+    if (isOpen && supabase) fetchConversations()
+  }, [isOpen, supabase])
 
   useEffect(() => {
-    if (selected) {
+    if (selected && supabase) {
       fetchMessages(selected.id)
       markAsRead(selected.id)
       const channel = supabase.channel(`chat:${selected.id}`)
@@ -197,9 +202,10 @@ export function Messages({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
         .subscribe()
       return () => { supabase.removeChannel(channel) }
     }
-  }, [selected])
+  }, [selected, supabase])
 
   useEffect(() => {
+    if (!supabase) return
     const channel = supabase.channel('online-users')
     channel.on('presence', { event: 'sync' }, () => {
       const state = channel.presenceState()
@@ -214,7 +220,7 @@ export function Messages({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
       }
     })
     return () => { supabase.removeChannel(channel) }
-  }, [])
+  }, [supabase])
 
   useEffect(() => {
     if (messagesEndRef.current) messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
@@ -231,6 +237,7 @@ export function Messages({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
   })
 
   const fetchConversations = async () => {
+    if (!supabase) return
     try {
       setLoading(true)
       const { data: { user } } = await supabase.auth.getUser()
@@ -272,6 +279,7 @@ export function Messages({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
   }
 
   const fetchMessages = async (otherUserId: string) => {
+    if (!supabase) return
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
@@ -286,27 +294,32 @@ export function Messages({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
   }
 
   const handleSend = async () => {
-    if (!inputText.trim() || !selected) return
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-
-    const tempId = Date.now().toString()
-    const newMsg: Message = { id: tempId, text: inputText.trim(), isMe: true, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), read: false }
+    if (!supabase || !selected) return
+    const newMsg: Message = {
+      id: Date.now().toString(),
+      text: inputText,
+      isMe: true,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      read: true
+    }
     setCurrentMessages(prev => [...prev, newMsg])
     setInputText("")
-
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
     await supabase.from<any, any>('').insert({ sender_id: user.id, receiver_id: selected.id, content: newMsg.text })
   }
 
   const markAsRead = async (otherId: string) => {
-     const { data: { user } } = await supabase.auth.getUser()
-     if (!user) return
-     await supabase.from<any, any>('').update({ is_read: true }).match({ receiver_id: user.id, sender_id: otherId, is_read: false })
+    if (!supabase) return
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    await supabase.from<any, any>('').update({ is_read: true }).match({ receiver_id: user.id, sender_id: otherId, is_read: false })
   }
 
   const shareRecipe = async (recipe: any) => {
+    if (!supabase || !selected) return
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user || !selected) return
+    if (!user) return
     const { error } = await supabase.from<any, any>('').insert({
         sender_id: user.id, receiver_id: selected.id,
         metadata: { type: 'recipe', recipe: { title: recipe.title, image: recipe.image_url, time: `${recipe.prep_time_minutes}m`, rating: recipe.average_rating || 0 } }

@@ -167,15 +167,22 @@ export function Notifications({ isOpen, onClose }: NotificationsProps) {
   const [selectedUser, setSelectedUser] = useState<Notification["user"] | null>(null)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [loading, setLoading] = useState(true)
-  const supabase = createBrowserClient()
+  const [supabase, setSupabase] = useState<ReturnType<typeof createBrowserClient> | null>(null)
 
   useEffect(() => {
-    if (isOpen) {
+    // Initialize Supabase client only on client side
+    const client = createBrowserClient()
+    setSupabase(client)
+  }, [])
+
+  useEffect(() => {
+    if (isOpen && supabase) {
       fetchNotifications()
     }
-  }, [isOpen])
+  }, [isOpen, supabase])
 
   const fetchNotifications = async () => {
+    if (!supabase) return
     try {
       setLoading(true)
       const { data: { user } } = await supabase.auth.getUser()

@@ -355,13 +355,17 @@ export function ReviewsFeed() {
   const [selectedUser, setSelectedUser] = useState<Review | null>(null)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [loading, setLoading] = useState(true)
-  const supabase = createBrowserClient()
+  const [supabase, setSupabase] = useState<ReturnType<typeof createBrowserClient> | null>(null)
 
   useEffect(() => {
+    // Initialize Supabase client only on client side
+    const client = createBrowserClient()
+    setSupabase(client)
     fetchReviews()
   }, [])
 
   const fetchReviews = async () => {
+    if (!supabase) return
     try {
       setLoading(true)
       const { data, error } = await supabase
@@ -405,6 +409,7 @@ export function ReviewsFeed() {
   }
 
   const handleLike = async (id: string) => {
+    if (!supabase) return
     // Optimistic UI
     setReviews(prev => prev.map(review => {
       if (review.id === id) {
@@ -426,6 +431,7 @@ export function ReviewsFeed() {
   }
 
   const handleRepost = async (id: string) => {
+    if (!supabase) return
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
