@@ -22,12 +22,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const supabase = createBrowserClient()
+  const [supabase, setSupabase] = useState<ReturnType<typeof createBrowserClient> | null>(null)
 
   useEffect(() => {
+    // Initialize Supabase client only on client side
+    const client = createBrowserClient()
+    setSupabase(client)
+
     const getInitialSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession()
+        const { data: { session } } = await client.auth.getSession()
         setSession(session)
         setUser(session?.user ?? null)
       } catch (error) {
@@ -44,7 +48,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setIsLoading(false)
     }, 5000)
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    const { data: { subscription } } = client.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session)
         setUser(session?.user ?? null)
@@ -56,11 +60,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       clearTimeout(safetyTimer)
       subscription.unsubscribe()
     }
-  }, [supabase])
+  }, [])
 
   const signOut = async () => {
     try {
-      await supabase.auth.signOut()
+      if (supabase) {
+        await supabase.auth.signOut()
+      }
     } catch (error) {
       console.error('Error signing out:', error)
     }
