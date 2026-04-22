@@ -1,9 +1,9 @@
 // @ts-nocheck
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
-import { Heart, MessageCircle, Share2, MoreVertical, ChevronUp, X } from "lucide-react"
+import { Heart, MoreVertical, X, ChevronUp, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface RecipeSwiperProps {
@@ -14,111 +14,116 @@ interface RecipeSwiperProps {
 const recipes = [
   {
     id: 1,
-    title: "Fluffy Japanese Souffle Pancakes",
-    image: "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=500&h=800&fit=crop",
-    chef: "Yuki Tanaka",
-    chefAvatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop",
-    description: "Cloud-like pancakes with vanilla",
+    title: "Rửa bát + chuẩn bị đồ ăn sáng",
+    image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=600&fit=crop",
+    userName: "You",
+    date: "20 Mar 2026",
+    activity: "No activity yet!",
     rating: 4.9,
-    reviews: 2847,
-    time: "45 min",
   },
   {
     id: 2,
-    title: "Creamy Tuscan Garlic Chicken",
-    image: "https://images.unsplash.com/photo-1532550907401-a500c9a57435?w=500&h=800&fit=crop",
-    chef: "Marco Rossi",
-    chefAvatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop",
-    description: "Restaurant-quality dinner in 35 min",
-    rating: 4.8,
-    reviews: 1923,
-    time: "35 min",
+    title: "Fluffy Japanese Souffle Pancakes",
+    image: "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=400&h=600&fit=crop",
+    userName: "Yuki Tanaka",
+    date: "19 Mar 2026",
+    activity: "Just posted",
+    rating: 4.9,
   },
   {
     id: 3,
-    title: "Rainbow Poke Bowl",
-    image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&h=800&fit=crop",
-    chef: "Kenji Nakamura",
-    chefAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop",
-    description: "Fresh and vibrant Hawaiian bowl",
-    rating: 4.7,
-    reviews: 1456,
-    time: "25 min",
+    title: "Creamy Tuscan Garlic Chicken",
+    image: "https://images.unsplash.com/photo-1532550907401-a500c9a57435?w=400&h=600&fit=crop",
+    userName: "Marco Rossi",
+    date: "18 Mar 2026",
+    activity: "2 hearts",
+    rating: 4.8,
   },
   {
     id: 4,
-    title: "Double Chocolate Lava Cake",
-    image: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=500&h=800&fit=crop",
-    chef: "Sophie Laurent",
-    chefAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop",
-    description: "Decadent molten chocolate cakes",
-    rating: 4.9,
-    reviews: 3201,
-    time: "30 min",
+    title: "Rainbow Poke Bowl",
+    image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=600&fit=crop",
+    userName: "Kenji Nakamura",
+    date: "17 Mar 2026",
+    activity: "5 hearts",
+    rating: 4.7,
   },
   {
     id: 5,
-    title: "Spicy Korean Fried Chicken",
-    image: "https://images.unsplash.com/photo-1575932444877-5106bee2a599?w=500&h=800&fit=crop",
-    chef: "Min-Jun Park",
-    chefAvatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop",
-    description: "Ultra-crispy with sweet-spicy glaze",
-    rating: 4.8,
-    reviews: 2156,
-    time: "50 min",
+    title: "Double Chocolate Lava Cake",
+    image: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=400&h=600&fit=crop",
+    userName: "Sophie Laurent",
+    date: "16 Mar 2026",
+    activity: "8 hearts",
+    rating: 4.9,
   },
   {
     id: 6,
-    title: "Seared Salmon with Asparagus",
-    image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&h=800&fit=crop",
-    chef: "Emma Wilson",
-    chefAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop",
-    description: "Elegant and healthy dinner",
+    title: "Spicy Korean Fried Chicken",
+    image: "https://images.unsplash.com/photo-1575932444877-5106bee2a599?w=400&h=600&fit=crop",
+    userName: "Min-Jun Park",
+    date: "15 Mar 2026",
+    activity: "3 hearts",
     rating: 4.8,
-    reviews: 1234,
-    time: "20 min",
   },
   {
     id: 7,
-    title: "Homemade Margherita Pizza",
-    image: "https://images.unsplash.com/photo-1604068549290-dea0e4a305ca?w=500&h=800&fit=crop",
-    chef: "Giovanni Ferrari",
-    chefAvatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop",
-    description: "Classic Italian with fresh basil",
-    rating: 4.9,
-    reviews: 2876,
-    time: "40 min",
+    title: "Seared Salmon with Asparagus",
+    image: "https://images.unsplash.com/photo-1581092162562-40038e57e4b8?w=400&h=600&fit=crop",
+    userName: "Emma Wilson",
+    date: "14 Mar 2026",
+    activity: "Just posted",
+    rating: 4.8,
   },
   {
     id: 8,
-    title: "Mango Sticky Rice",
-    image: "https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=500&h=800&fit=crop",
-    chef: "Aom Tanakorn",
-    chefAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop",
-    description: "Sweet Thai dessert perfection",
+    title: "Homemade Margherita Pizza",
+    image: "https://images.unsplash.com/photo-1604068549290-dea0e4a305ca?w=400&h=600&fit=crop",
+    userName: "Giovanni Ferrari",
+    date: "13 Mar 2026",
+    activity: "10 hearts",
     rating: 4.9,
-    reviews: 1987,
-    time: "15 min",
+  },
+  {
+    id: 9,
+    title: "Mango Sticky Rice",
+    image: "https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=400&h=600&fit=crop",
+    userName: "Aom Tanakorn",
+    date: "12 Mar 2026",
+    activity: "4 hearts",
+    rating: 4.9,
+  },
+  {
+    id: 10,
+    title: "Thai Green Curry",
+    image: "https://images.unsplash.com/photo-1455619452474-d2be8b1e9f1d?w=400&h=600&fit=crop",
+    userName: "Somchai Thai",
+    date: "11 Mar 2026",
+    activity: "6 hearts",
+    rating: 4.7,
   },
 ]
 
 export function RecipeSwiper({ isOpen, onClose }: RecipeSwiperProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [likedRecipes, setLikedRecipes] = useState<number[]>([])
+  const [transition, setTransition] = useState(true)
+  const containerRef = useRef<HTMLDivElement>(null)
   const touchStart = useRef(0)
   const touchEnd = useRef(0)
+  const startY = useRef(0)
 
   if (!isOpen) return null
 
-  const currentRecipe = recipes[currentIndex % recipes.length]
+  const currentRecipe = recipes[currentIndex]
 
-  const handleSwipeDown = () => {
-    if (currentIndex < recipes.length * 3 - 1) {
+  const handleSwipeUp = () => {
+    if (currentIndex < recipes.length - 1) {
       setCurrentIndex(prev => prev + 1)
     }
   }
 
-  const handleSwipeUp = () => {
+  const handleSwipeDown = () => {
     if (currentIndex > 0) {
       setCurrentIndex(prev => prev - 1)
     }
@@ -126,6 +131,7 @@ export function RecipeSwiper({ isOpen, onClose }: RecipeSwiperProps) {
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStart.current = e.targetTouches[0].clientY
+    startY.current = e.targetTouches[0].clientY
   }
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -134,11 +140,11 @@ export function RecipeSwiper({ isOpen, onClose }: RecipeSwiperProps) {
 
   const handleTouchEnd = () => {
     const distance = touchStart.current - touchEnd.current
-    const isSwipeDown = distance > 50
-    const isSwipeUp = distance < -50
+    const isSwipeUp = distance > 30
+    const isSwipeDown = distance < -30
 
-    if (isSwipeDown) handleSwipeDown()
     if (isSwipeUp) handleSwipeUp()
+    if (isSwipeDown) handleSwipeDown()
   }
 
   const toggleLike = () => {
@@ -152,145 +158,122 @@ export function RecipeSwiper({ isOpen, onClose }: RecipeSwiperProps) {
   const isLiked = likedRecipes.includes(currentRecipe.id)
 
   return (
-    <div className="fixed inset-0 z-50 bg-black overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-black flex items-center justify-center p-0 sm:p-4">
       {/* Close button */}
       <button
         onClick={onClose}
-        className="absolute top-4 left-4 z-20 w-8 h-8 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center hover:bg-white/20 transition-colors"
+        className="absolute top-4 left-4 z-20 w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center hover:bg-white/20 transition-colors"
       >
-        <X className="w-5 h-5 text-white" />
+        <X className="w-6 h-6 text-white" />
       </button>
 
-      {/* Progress indicator */}
+      {/* Page indicator */}
       <div className="absolute top-4 right-4 z-20 text-white text-sm font-medium">
-        {(currentIndex % recipes.length) + 1} / {recipes.length}
+        {currentIndex + 1} / {recipes.length}
       </div>
 
-      {/* Main container */}
+      {/* Main container with frame effect */}
       <div
-        className="relative w-full h-full overflow-hidden"
+        ref={containerRef}
+        className="relative w-full h-full sm:w-96 sm:h-auto sm:rounded-2xl sm:overflow-hidden flex flex-col"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Cards container - Vertical infinite scroll */}
-        <div className="relative w-full h-full">
-          {recipes.map((recipe, index) => (
-            <div
-              key={recipe.id}
+        {/* Image container - Locket style with frame */}
+        <div className="relative w-full flex-1 sm:flex-none sm:h-96 overflow-hidden rounded-xl sm:rounded-2xl">
+          <div
+            className={cn(
+              "absolute inset-0 transition-all duration-500",
+              transition ? "opacity-100" : "opacity-0"
+            )}
+          >
+            <Image
+              src={currentRecipe.image}
+              alt={currentRecipe.title}
+              fill
+              className="object-cover"
+              priority
+            />
+          </div>
+
+          {/* Gradient overlay at bottom */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        </div>
+
+        {/* Info section - Locket style */}
+        <div className="bg-black p-6 sm:p-4 text-white space-y-3 rounded-b-xl sm:rounded-b-2xl">
+          {/* Title */}
+          <h3 className="text-lg sm:text-base font-semibold leading-tight text-balance">
+            {currentRecipe.title}
+          </h3>
+
+          {/* User and date */}
+          <div className="flex items-center justify-between text-sm">
+            <span className="font-medium">{currentRecipe.userName}</span>
+            <span className="text-gray-400">{currentRecipe.date}</span>
+          </div>
+
+          {/* Activity status */}
+          <div className="flex items-center gap-2 text-xs text-gray-400">
+            <div className="flex gap-1">
+              {[...Array(3)].map((_, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    "w-1 h-1 rounded-full",
+                    i === 0 ? "bg-gray-400" : "bg-gray-600"
+                  )}
+                />
+              ))}
+            </div>
+            <span>{currentRecipe.activity}</span>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex items-center justify-between pt-2 border-t border-white/10">
+            <button
+              onClick={toggleLike}
               className={cn(
-                "absolute inset-0 w-full h-full transition-all duration-500 ease-out",
-                index === currentIndex % recipes.length
-                  ? "opacity-100 translate-y-0"
-                  : index < currentIndex % recipes.length
-                  ? "opacity-0 -translate-y-full"
-                  : "opacity-0 translate-y-full"
+                "flex-1 py-2 px-3 flex items-center justify-center gap-2 rounded-lg transition-all text-sm font-medium",
+                isLiked
+                  ? "bg-red-500/20 text-red-400"
+                  : "hover:bg-white/10 text-gray-300"
               )}
             >
-              {/* Full-screen image */}
-              <div className="relative w-full h-full">
-                <Image
-                  src={recipe.image}
-                  alt={recipe.title}
-                  fill
-                  className="object-cover"
-                  priority
-                />
+              <Heart
+                className="w-4 h-4"
+                fill={isLiked ? "currentColor" : "none"}
+              />
+              Like
+            </button>
 
-                {/* Gradient overlay - Top to bottom */}
-                <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/90" />
-
-                {/* Content - Positioned absolutely at bottom */}
-                <div className="absolute inset-0 flex flex-col justify-between p-4 text-white">
-                  {/* Top - Icons and info */}
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-1">
-                      <p className="text-xs opacity-75">Today</p>
-                      <p className="text-sm font-medium">{recipe.time}</p>
-                    </div>
-                  </div>
-
-                  {/* Bottom - Recipe info and actions */}
-                  <div className="space-y-6">
-                    {/* Recipe title and description */}
-                    <div>
-                      <h2 className="text-3xl font-bold leading-tight mb-2">
-                        {recipe.title}
-                      </h2>
-                      <p className="text-sm opacity-90">{recipe.description}</p>
-                    </div>
-
-                    {/* Chef info - like Locket style */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="relative w-12 h-12 rounded-full overflow-hidden ring-2 ring-white/40">
-                          <Image
-                            src={recipe.chefAvatar}
-                            alt={recipe.chef}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold">by {recipe.chef}</p>
-                          <p className="text-xs opacity-75">
-                            ★ {recipe.rating} ({recipe.reviews})
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Action buttons - Vertical stack on right */}
-                      <div className="flex flex-col gap-3">
-                        {/* Like */}
-                        <button
-                          onClick={toggleLike}
-                          className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-all active:scale-75"
-                        >
-                          <Heart
-                            className="w-5 h-5"
-                            fill={isLiked ? "currentColor" : "none"}
-                            color={isLiked ? "#ef4444" : "white"}
-                            strokeWidth={2}
-                          />
-                        </button>
-
-                        {/* Comment */}
-                        <button className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-all">
-                          <MessageCircle className="w-5 h-5 text-white" />
-                        </button>
-
-                        {/* Share */}
-                        <button className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-all">
-                          <Share2 className="w-5 h-5 text-white" />
-                        </button>
-
-                        {/* More */}
-                        <button className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-all">
-                          <MoreVertical className="w-5 h-5 text-white" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Swipe hint - Bottom center */}
-                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-white/50 text-xs animate-pulse">
-                  <span>Swipe up</span>
-                  <ChevronUp className="w-4 h-4" />
-                </div>
-              </div>
-            </div>
-          ))}
+            <button className="flex-1 py-2 px-3 flex items-center justify-center gap-2 rounded-lg hover:bg-white/10 transition-all text-sm font-medium text-gray-300">
+              <MoreVertical className="w-4 h-4" />
+              More
+            </button>
+          </div>
         </div>
       </div>
 
+      {/* Navigation hints */}
+      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 text-white/50 text-xs">
+        <ChevronUp className="w-4 h-4 animate-bounce" />
+        <span>Swipe up for more</span>
+      </div>
+
+      {/* Keyboard navigation support */}
+      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-gray-600 text-xs hidden sm:block">
+        Scroll or use arrow keys
+      </div>
+
       <style jsx>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 0.5; }
-          50% { opacity: 1; }
+        @keyframes bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-4px); }
         }
-        .animate-pulse {
-          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        .animate-bounce {
+          animation: bounce 2s infinite;
         }
       `}</style>
     </div>
