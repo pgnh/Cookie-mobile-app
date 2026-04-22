@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Search, Bell } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-const tabs = ["Explore", "Reviews"] as const
+const tabs = ["Feed", "Reviews"] as const
 type Tab = (typeof tabs)[number]
 
 interface TopNavProps {

@@ -12,10 +12,10 @@ import { Profile } from "@/components/cookie/profile"
 import { Notifications } from "@/components/cookie/notifications"
 import { useAuth } from "@/components/auth-provider"
 
-type Tab = "Explore" | "Reviews"
+type Tab = "Feed" | "Reviews"
 
 export default function CookieApp() {
-  const [activeTab, setActiveTab] = useState<Tab>("Explore")
+  const [activeTab, setActiveTab] = useState<Tab>("Feed")
   const [isCameraOpen, setIsCameraOpen] = useState(false)
   const [isDiscoverOpen, setIsDiscoverOpen] = useState(false)
   const [isMessagesOpen, setIsMessagesOpen] = useState(false)
@@ -37,7 +37,7 @@ export default function CookieApp() {
       />
       
       <main className="pb-24">
-        {activeTab === "Explore" && <MasonryFeed />}
+        {activeTab === "Feed" && <MasonryFeed />}
         {activeTab === "Reviews" && <ReviewsFeed />}
       </main>
       
