@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { TopNav } from "@/components/cookie/top-nav"
 import { BottomNav } from "@/components/cookie/bottom-nav"
 import { MasonryFeed } from "@/components/cookie/masonry-feed"
@@ -10,8 +10,6 @@ import { ReviewsFeed } from "@/components/cookie/reviews-feed"
 import { Messages } from "@/components/cookie/messages"
 import { Profile } from "@/components/cookie/profile"
 import { Notifications } from "@/components/cookie/notifications"
-import { SplashScreen } from "@/components/cookie/splash-screen"
-import { LoginScreen } from "@/components/cookie/login-screen"
 import { useAuth } from "@/components/auth-provider"
 
 type Tab = "Explore" | "Reviews"
@@ -23,41 +21,11 @@ export default function CookieApp() {
   const [isMessagesOpen, setIsMessagesOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
-  const [showSplash, setShowSplash] = useState(true)
-  const [isGuest, setIsGuest] = useState(false)
   
   const { user, isLoading, signOut } = useAuth()
 
-  const handleSplashComplete = () => {
-    setShowSplash(false)
-  }
-
-  const handleLogin = (method: string) => {
-    console.log(`[Auth] Logged in with ${method}`)
-    setIsGuest(false)
-  }
-
-  const handleSkipLogin = () => {
-    console.log("[Auth] Skipping login, exploring as guest")
-    setIsGuest(true)
-  }
-
   const handleLogout = async () => {
     await signOut()
-    setIsGuest(false)
-  }
-
-  if (showSplash) {
-    return <SplashScreen onComplete={handleSplashComplete} />
-  }
-
-  if (isLoading) {
-    // Show nothing or a small spinner while auth finishes
-    return <div className="min-h-screen bg-white" /> 
-  }
-
-  if (!user && !isGuest) {
-    return <LoginScreen onLogin={handleLogin} onSkip={handleSkipLogin} />
   }
 
   return (
